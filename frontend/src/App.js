@@ -1,5 +1,5 @@
 // frontend/src/App.js
-import { BrowserRouter, Routes, Route, useLocation, Navigate, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate, NavLink } from "react-router-dom";
 import { useState } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
@@ -15,9 +15,18 @@ import EditPostPage from "./pages/EditPostPage";
 import CreatePostPage from "./pages/CreatePostPage";
 import AdminPage from "./pages/AdminPage";
 
+// Route guard for Contact – only guests and regular users allowed
+const ContactRoute = () => {
+  const { user } = useAuth();
+  if (user?.role === 'admin') {
+    return <Navigate to="/home" replace />;
+  }
+  return <ContactPage />;
+};
+
 function Layout() {
   const location = useLocation();
-  const { user, logout } = useAuth(); // Add logout here
+  const { user, logout } = useAuth();
   const [darkMode, setDarkMode] = useState(false);
 
   const toggleDarkMode = () => {
@@ -27,7 +36,6 @@ function Layout() {
 
   const handleLogout = () => {
     logout();
-    // Navigate to login after logout
     window.location.href = '/login';
   };
 
@@ -43,18 +51,45 @@ function Layout() {
           <h1 className="site-title">The Chic Journal</h1>
           <nav className="nav-bar">
             <ul>
-              <li><Link to="/home">Home</Link></li>
-              <li><Link to="/about">About</Link></li>
-              <li><Link to="/contact">Contact</Link></li>
-              
+              <li>
+                <NavLink to="/home" className={({ isActive }) => (isActive ? "active" : "")}>
+                  Home
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/about" className={({ isActive }) => (isActive ? "active" : "")}>
+                  About
+                </NavLink>
+              </li>
+
+              {/* Contact link: hidden for admin users */}
+              {(!user || user.role !== 'admin') && (
+                <li>
+                  <NavLink to="/contact" className={({ isActive }) => (isActive ? "active" : "")}>
+                    Contact
+                  </NavLink>
+                </li>
+              )}
+
               {user ? (
-                // Show these when user is logged in
                 <>
-                  <li><Link to="/profile">Profile</Link></li>
+                  <li>
+                    <NavLink to="/profile" className={({ isActive }) => (isActive ? "active" : "")}>
+                      Profile
+                    </NavLink>
+                  </li>
                   {user.role === 'admin' && (
-                    <li><Link to="/admin">Admin</Link></li>
+                    <li>
+                      <NavLink to="/admin" className={({ isActive }) => (isActive ? "active" : "")}>
+                        Admin
+                      </NavLink>
+                    </li>
                   )}
-                  <li><Link to="/create-post">Write Post</Link></li>
+                  <li>
+                    <NavLink to="/create-post" className={({ isActive }) => (isActive ? "active" : "")}>
+                      Write Post
+                    </NavLink>
+                  </li>
                   <li className="user-info">
                     <span className="user-greeting">Hi, {user.name}!</span>
                     <button onClick={handleLogout} className="logout-btn-nav">
@@ -63,16 +98,27 @@ function Layout() {
                   </li>
                 </>
               ) : (
-                // Show these when no user is logged in
                 <>
-                  <li><Link to="/register">Register</Link></li>
-                  <li><Link to="/login">Login</Link></li>
+                  <li>
+                    <NavLink to="/register" className={({ isActive }) => (isActive ? "active" : "")}>
+                      Register
+                    </NavLink>
+                  </li>
+                  <li>
+                    <NavLink to="/login" className={({ isActive }) => (isActive ? "active" : "")}>
+                      Login
+                    </NavLink>
+                  </li>
                 </>
               )}
-              
+
               <li>
-                <button onClick={toggleDarkMode} className="dark-btn">
-                  {darkMode ? "☀️" : "🌙"}
+                <button 
+                  className={`glow-btn ${darkMode ? 'dark' : 'light'}`}
+                  onClick={toggleDarkMode}
+                  aria-label="Toggle dark mode"
+                >
+                  <span className="glow-text">{darkMode ? '☾' : '☀︎'}</span>
                 </button>
               </li>
             </ul>
@@ -87,7 +133,8 @@ function Layout() {
           <Route path="/register" element={user ? <Navigate to="/home" /> : <RegisterPage />} />
           <Route path="/home" element={<HomePage />} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
+          {/* Protected contact route */}
+          <Route path="/contact" element={<ContactRoute />} />
           <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
           <Route path="/posts/:id" element={<PostPage />} />
           <Route path="/edit-post/:id" element={user ? <EditPostPage /> : <Navigate to="/login" />} />

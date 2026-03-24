@@ -1,0 +1,5 @@
+#frontend/.gitignore (CRAcreatesthis automatically)
+node_modules/
+.env
+.env.local
+build/

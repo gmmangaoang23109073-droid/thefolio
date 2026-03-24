@@ -44,38 +44,47 @@ body {
 .header .site-title {
   margin: 0;
   font-family: var(--font-title);
-  color: white;
+  color: #731C37;
   font-size: 24px;
   white-space: nowrap;
 }
 
 /* ===== NAVIGATION ===== */
 .nav-bar ul {
-  display: flex;
-  align-items: center;
-  gap: 20px;
   list-style: none;
+  display: flex;
+  gap: 1.5rem;
   margin: 0;
   padding: 0;
+  align-items: center;
+  flex-wrap: wrap; /* for smaller screens */
 }
 
-.nav-bar a {
+.nav-bar ul li a {
   text-decoration: none;
   color: white;
-  font-size: 18px;
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 8px 16px;
+  border-radius: 20px; /* pill shape */
   transition: all 0.3s ease;
+  font-weight: 500;
+  display: inline-block;
 }
 
-.nav-bar a:hover {
-  background: #ff6fa5;
+.nav-bar ul li a:hover {
+  background-color: #f0f0f0;
+  color: #000;
 }
 
-.nav-bar a.active {
-  background-color: white;
-  color: var(--primary-pink);
-  font-weight: bold;
+/* Active link – pink highlight */
+.nav-bar ul li a.active {
+  background-color: #ff69b4; /* hot pink */
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 105, 180, 0.9);
+}
+
+/* Optional: darker pink on hover for active link */
+.nav-bar ul li a.active:hover {
+  background-color: #ff1493;
 }
 
 /* User Info in Header */
@@ -89,10 +98,14 @@ body {
   margin-left: 10px;
 }
 
-.user-greeting {
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
+.usergreeting {
+  display: inline-block;   /* or inline, depending on layout needs */
+  white-space: nowrap;     /* prevents wrapping inside the element */
+}
+
+.usergreeting * {
+  display: inline;         /* ensures any inner elements (spans, etc.) stay inline */
+  white-space: nowrap;
 }
 
 .logout-btn-nav {
@@ -105,6 +118,7 @@ body {
   font-size: 14px;
   font-weight: bold;
   transition: all 0.3s ease;
+  width: 70px;
 }
 
 .logout-btn-nav:hover {
@@ -152,6 +166,11 @@ body {
     border: 2px solid var(--dark-pink);
     border-radius: 10px;
     box-shadow: var(--shadow);
+}
+
+.dark-mode .profile-pic {
+    box-shadow: 0 0 20px 8px rgba(255, 105, 180, 0.5); 
+    transition: box-shadow 0.3s ease; 
 }
 
 /* ===== CONTAINERS ===== */
@@ -245,24 +264,76 @@ body {
   animation: spin 0.6s linear infinite;
 }
 
+/* Base button styles */
+.btn-edit,
+.btn-delete {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;          /* pill shape */
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  white-space: nowrap;           /* keeps text in one line */
+  display: inline-block;         /* ensures buttons sit inline */
+  line-height: 1.5;
+}
+
+/* Pink edit button */
 .btn-edit {
-  background: #007bff;
+  background: #ff69b4;           /* hot pink */
   color: white;
+  box-shadow: 0 2px 4px rgba(255, 105, 180, 0.3);
 }
 
 .btn-edit:hover {
-  background: #0056b3;
-  transform: translateY(-2px);
+  background: #ff1493;           /* deeper pink */
+  box-shadow: 0 4px 8px rgba(255, 105, 180, 0.4);
+  transform: translateY(-1px);
 }
 
+.btn-edit:active {
+  background: #d40d7a;
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(255, 105, 180, 0.4);
+}
+
+/* Red delete button */
 .btn-delete {
-  background: #dc3545;
+  background: #dc3545;           /* bootstrap red */
   color: white;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
 }
 
 .btn-delete:hover {
-  background: #c82333;
-  transform: translateY(-2px);
+  background: #c82333;           /* darker red */
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-delete:active {
+  background: #bd2130;
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(220, 53, 69, 0.4);
+}
+
+/* Focus styles for accessibility */
+.btn-edit:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.5);
+}
+
+.btn-delete:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.5);
+}
+
+/* Button group for side-by-side layout */
+.button-group {
+  display: flex;
+  gap: 10px;                     /* space between buttons */
+  align-items: center;
 }
 
 .btn-edit-small {
@@ -319,6 +390,69 @@ body {
 
 .dark-btn:hover {
   transform: scale(1.1);
+}
+
+/* ===== GLOW BUTTON (Dark Mode Toggle) ===== */
+.glow-btn {
+  background: transparent;
+  border: 2px solid #ff69b4; /* default pink border */
+  border-radius: 30px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+}
+
+/* Light mode (default) */
+.glow-btn.light {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ff69b4;
+  border-color: #ff69b4;
+  box-shadow: 0 0 12px #ff69b4;
+}
+
+/* Dark mode */
+.glow-btn.dark {
+  background: rgba(0, 0, 0, 0.4);        /* dark semi-transparent background */
+  border-color: #ffd700;                  /* gold border */
+  color: #ffd700;                          /* gold text */
+  box-shadow: 0 0 15px #ffd700, 0 0 25px rgba(255, 215, 0, 0.5); /* multi-layer gold glow */
+}
+
+/* Hover effect for both modes */
+.glow-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px currentColor;       /* uses the current text/border color */
+}
+
+/* Light mode specific hover */
+.glow-btn.light:hover {
+  background: rgba(255, 105, 180, 0.2);
+}
+
+/* Dark mode specific hover */
+.glow-btn.dark:hover {
+  background: rgba(255, 215, 0, 0.15);     /* subtle gold tint on hover */
+  box-shadow: 0 0 25px #ffd700, 0 0 35px rgba(255, 215, 0, 0.6);
+}
+
+/* Glow text icon */
+.glow-text {
+  display: inline-block;
+  transition: transform 0.3s;
+}
+
+.glow-btn:hover .glow-text {
+  transform: rotate(15deg);
+}
+
+/* Optional: active/pressed effect */
+.glow-btn:active {
+  transform: scale(0.98);
 }
 
 /* ===== FORMS ===== */
@@ -617,6 +751,13 @@ img {
   max-height: 400px;
 }
 
+.post-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  cursor: pointer; /* shows it's clickable */
+}
+
 .post-image-full {
   width: 100%;
   height: 400px;
@@ -749,6 +890,7 @@ img {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(5px);
   text-align: center;
+  border: 2px solid #FF1493;
 }
 
 .profile-title {
@@ -1243,65 +1385,155 @@ body.dark-mode .register-form button:hover {
 
 /* ===== ABOUT PAGE ===== */
 .about-content {
-  width: 100%;
-  max-width: 1000px;
-  margin: 30px auto;
-  padding: 20px;
-  text-align: center;
+    width: 60%;
+    margin: 30px auto;
+    text-align: center;
 }
 
+/*Titles*/
 .about-title,
 .section-title {
-  font-family: var(--font-fancy);
-  color: var(--text-color);
-  font-size: 36px;
-  margin: 30px auto 15px;
-  text-align: center;
+    font-family: "Brush Script MT";
+    color: #731C37;
+    font-size: 36px;
+    margin: 30px 0 15px;
 }
 
+/*About Intro*/
 .about-intro {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
 }
+
+.about-pic {
+    width: 300px;
+    height: 300px;
+    margin: 10px;
+    border-radius: 10px;
+    border: 2px solid #FF1493;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.9);
+}
+
+
+
 
 .about-text {
-  font-size: 20px;
-  max-width: 500px;
-  margin: 10px;
-  text-align: left;
+    font-family: "Comic Sans MS";
+    font-size: 20px;
+    color: #731C37;
+    max-width: 500px;
+    margin: 10px;
+    text-align: left;
 }
 
+/*Sections*/
 .section {
-  border: 2px solid var(--dark-pink);
-  border-radius: 10px;
-  padding: 20px;
-  margin-bottom: 30px;
-  text-align: center;
+    border: 2px solid #FF1493;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 30px;
+    align-items: center;
+}
+
+/*Images*/
+.small-img {
+    display: inline-block;
+    width: 200px;
+    margin: 10px;
+    border-radius: 8px;
+    border: 2px solid #FF1493;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
 }
 
 .item {
-  display: inline-block;
-  width: 260px;
-  margin: 10px;
+	display: inline-block;
+	width: 260px;
+	margin: 10 px;
+	}
+
+
+/*Lists*/
+.list {
+    font-family: "Comic Sans MS";
+    font-size: 22px;
+    color: #731C37;
+    text-align: left;
+    padding-left: 20px;
 }
+
+.list li {
+    margin-bottom: 15px;
+}
+
+/* Ordered list (timeline) */
+ol.list {
+  list-style-type: decimal;
+  padding-left: 40px;
+  color: #731C37;
+  font-family: "Comic Sans MS";
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+/* Each timeline item */
+  ol.list li {
+  margin-bottom: 14px;
+  font-weight: normal;
+}
+
+.container2 {
+	width: 700px;
+	background-color: rgba(250, 154, 192, 0.7);
+	padding: 5px;
+	border-radius: 20px;
+	margin: 0px auto;
+	text-align: center;
+}
+
+/* Glow effect for container2 in dark mode */
+.dark-mode .container2 {
+    box-shadow: 0 0 20px 8px rgba(255, 105, 180, 0.5); 
+    transition: box-shadow 0.3s ease; 
+}
+
+/*Quote*/
+.quote {
+    font-family: "Comic Sans MS";
+    font-size: 24px;
+    color: #731C37;
+    font-style: italic;
+    border-left: 5px solid #C6186C;
+    padding-left: 15px;
+    max-width: 600px;
+    margin: 30px auto;
+    text-align: left;
+}
+
+
 
 /* ===== QUIZ ===== */
 .quiz-container {
-  background: var(--primary-pink);
+  background: #FA9AC0;
   padding: 25px 30px;
   border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 0 15px rgba(0,0,0,0.1);
   width: 400px;
+
   margin: 60px auto;
+}
+
+/* ===== QUESTION ===== */
+h2 {
+  margin-bottom: 15px;
   text-align: center;
 }
 
-.quiz-container h2 {
-  margin-bottom: 15px;
-  text-align: center;
+/* ===== OPTIONS ===== */
+.options {
+  margin-bottom: 20px;
 }
 
 .option {
@@ -1312,7 +1544,6 @@ body.dark-mode .register-form button:hover {
   cursor: pointer;
   border: 2px solid transparent;
   transition: border-color 0.3s;
-  text-align: left;
 }
 
 .option:hover {
@@ -1323,6 +1554,31 @@ body.dark-mode .register-form button:hover {
   background: #d0e7ff;
   border-color: #007bff;
 }
+
+
+button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+button:disabled {
+  background: #cccccc;
+  cursor: default;
+}
+
+/* ===== RESULT ===== */
+#result {
+  margin-top: 20px;
+  font-weight: bold;
+  text-align: center;
+}
+
 
 /* ===== EXPLORE MORE SECTION ===== */
 .previews {

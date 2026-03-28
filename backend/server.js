@@ -16,9 +16,9 @@ const app = express();
 // --- CORS Configuration ---
 // Allow only specific origins (localhost for development, your Vercel app for production)
 const allowedOrigins = [
-  'http://localhost:3000',           // Local React dev server
-  'https://thefolio-rust.vercel.app', // Your live frontend (update with your actual URL)
-  // Add other frontend URLs if needed (e.g., preview deployments)
+  'http://localhost:3000',                      // Local React dev server
+  'https://thefolio-rust.vercel.app',           // Your live frontend (update if changed)
+  // Add any other frontend URLs (e.g., preview deployments)
 ];
 
 app.use(cors({
@@ -31,7 +31,7 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true, // If you need cookies/auth headers
+  credentials: true, // If your frontend sends cookies/auth headers
 }));
 
 // Body parsers
@@ -62,7 +62,8 @@ app.get('/api/contact/test-direct', (req, res) => {
 });
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/chic-journal')
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/chic-journal';
+mongoose.connect(mongoURI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 

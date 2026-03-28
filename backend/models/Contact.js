@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const messageSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
@@ -6,3 +8,5 @@ const messageSchema = new mongoose.Schema({
   repliedAt: { type: Date },                        // NEW
   createdAt: { type: Date, default: Date.now },
 });
+
+module.exports = mongoose.model('Contact', messageSchema);

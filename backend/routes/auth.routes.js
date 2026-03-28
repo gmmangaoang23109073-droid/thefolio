@@ -1,18 +1,18 @@
-// backend/routes/auth.routes.js
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Message = require('../models/Message');   // Message model
 const { protect } = require('../middleware/auth.middleware');
 const upload = require('../middleware/upload');
 const router = express.Router();
 
-// Helper function — generates a JWT token that expires in 7 days
-const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+// Helper – generate JWT token with id, email, and role
+const generateToken = (id, email, role) => jwt.sign({ id, email, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
 // ── POST /api/auth/register ───────────────────────────────────
 router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
-  const normalizedEmail = email.toLowerCase(); // always store lowercase
+  const normalizedEmail = email.toLowerCase();
   console.log('📝 Register attempt for:', normalizedEmail);
   try {
     const exists = await User.findOne({ email: normalizedEmail });
@@ -25,7 +25,8 @@ router.post('/register', async (req, res) => {
     const user = await User.create({ name, email: normalizedEmail, password });
     console.log('✅ User created with ID:', user._id);
 
-    const token = generateToken(user._id);
+    // Include email and role in token
+    const token = generateToken(user._id, user.email, user.role);
     console.log('✅ Token generated');
 
     res.status(201).json({
@@ -42,7 +43,7 @@ router.post('/register', async (req, res) => {
 // ── POST /api/auth/login ──────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  const normalizedEmail = email.toLowerCase(); // normalize for lookup
+  const normalizedEmail = email.toLowerCase();
   console.log('🔐 Login attempt for:', normalizedEmail);
   try {
     const user = await User.findOne({ email: normalizedEmail });
@@ -63,8 +64,9 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('✅ Login successful for:', normalizedEmail);
+    // Include email and role in token
     res.json({
-      token: generateToken(user._id),
+      token: generateToken(user._id, user.email, user.role),
       user: { _id: user._id, name: user.name, email: user.email, role: user.role, profilePic: user.profilePic }
     });
   } catch (err) {
@@ -74,10 +76,10 @@ router.post('/login', async (req, res) => {
 });
 
 // ── GET /api/auth/me ──────────────────────────────────────────
-// Returns the currently logged-in user's data (requires token)
 router.get('/me', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
+    // req.user is set by protect middleware (includes id, email, role)
+    const user = await User.findById(req.user.id).select('-password');
     res.json(user);
   } catch (err) {
     console.error('🔥 /me error:', err);
@@ -85,11 +87,22 @@ router.get('/me', protect, async (req, res) => {
   }
 });
 
+// ── GET /api/auth/messages ────────────────────────────────────
+// Returns all messages sent by the currently logged‑in user (by email)
+router.get('/messages', protect, async (req, res) => {
+  try {
+    const messages = await Message.find({ email: req.user.email }).sort({ createdAt: -1 });
+    res.json(messages);
+  } catch (err) {
+    console.error('🔥 /messages error:', err);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
 // ── PUT /api/auth/profile ─────────────────────────────────────
-// Update name, bio, or upload a new profile picture
 router.put('/profile', protect, upload.single('profilePic'), async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user.id);
     if (req.body.name) user.name = req.body.name;
     if (req.body.bio) user.bio = req.body.bio;
     if (req.file) user.profilePic = req.file.filename;
@@ -106,7 +119,7 @@ router.put('/profile', protect, upload.single('profilePic'), async (req, res) =>
 router.put('/change-password', protect, async (req, res) => {
   const { currentPassword, newPassword } = req.body;
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user.id);
     const match = await user.matchPassword(currentPassword);
     if (!match) {
       return res.status(400).json({ message: 'Current password is incorrect' });
@@ -117,25 +130,6 @@ router.put('/change-password', protect, async (req, res) => {
   } catch (err) {
     console.error('🔥 Change password error:', err);
     res.status(500).json({ message: err.message });
-  }
-});
-
-// POST /api/contact
-router.post('/', async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: 'All fields are required' });
-    }
-
-    const newMessage = new Message({ name, email, message });
-    await newMessage.save();
-
-    res.status(201).json({ success: true, message: 'Message sent successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
   }
 });
 

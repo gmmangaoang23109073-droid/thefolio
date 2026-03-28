@@ -16,7 +16,6 @@ function ContactPage() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Check authentication on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -81,14 +80,12 @@ function ContactPage() {
         setFormData({ name: "", email: "", message: "" });
         setErrors({});
         setTimeout(() => setSubmitSuccess(false), 3000);
-        // If logged in, refresh messages list
         if (isLoggedIn) {
-          fetchUserMessages();
+          fetchUserMessages(); // refresh inbox
         }
       } catch (err) {
         console.error(err);
         let errorMessage = "Failed to send message. ";
-
         if (err.response) {
           errorMessage += `Status ${err.response.status}. `;
           const details = err.response.data?.error || err.response.data?.message || JSON.stringify(err.response.data);
@@ -98,7 +95,6 @@ function ContactPage() {
         } else {
           errorMessage += err.message;
         }
-
         setSubmitError(errorMessage);
       } finally {
         setLoading(false);
@@ -121,13 +117,21 @@ function ContactPage() {
               {messages.map((msg) => (
                 <div key={msg._id} className="message-card">
                   <div className="message-header">
-                    <strong>You:</strong> {new Date(msg.createdAt).toLocaleString()}
+                    <span className="message-sender">You</span>
+                    <span className="message-date">
+                      {new Date(msg.createdAt).toLocaleString()}
+                    </span>
                   </div>
                   <div className="message-content">{msg.message}</div>
                   {msg.adminReply && (
                     <div className="admin-reply">
-                      <strong>Admin reply:</strong> {msg.adminReply}
-                      <div className="reply-date">{new Date(msg.repliedAt).toLocaleString()}</div>
+                      <div className="reply-header">
+                        <strong>Admin reply:</strong>
+                        <span className="reply-date">
+                          {new Date(msg.repliedAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="reply-content">{msg.adminReply}</div>
                     </div>
                   )}
                 </div>
@@ -142,7 +146,6 @@ function ContactPage() {
         <h2 className="contact-title">Contact Me</h2>
 
         <form className="contact-form" onSubmit={handleSubmit}>
-          
           <label htmlFor="name">Name:</label>
           <input
             type="text"
@@ -188,7 +191,6 @@ function ContactPage() {
 
       {/* ===== RESOURCES TABLE ===== */}
       <h3 className="section-title">Useful Resources</h3>
-
       <table className="resources-table">
         <thead>
           <tr>
@@ -203,31 +205,23 @@ function ContactPage() {
                 Vogue
               </a>
             </td>
-            <td>
-              A fashion website that shares trends, styling tips, and inspiration.
-            </td>
+            <td>A fashion website that shares trends, styling tips, and inspiration.</td>
           </tr>
-
           <tr>
             <td>
               <a href="https://www.pinterest.com/" target="_blank" rel="noreferrer">
                 Pinterest
               </a>
             </td>
-            <td>
-              A visual platform where I find outfit ideas and style inspiration.
-            </td>
+            <td>A visual platform where I find outfit ideas and style inspiration.</td>
           </tr>
-
           <tr>
             <td>
               <a href="https://www.whowhatwear.com/" target="_blank" rel="noreferrer">
                 Who What Wear
               </a>
             </td>
-            <td>
-              A fashion site that focuses on modern and classy everyday fashion.
-            </td>
+            <td>A fashion site that focuses on modern and classy everyday fashion.</td>
           </tr>
         </tbody>
       </table>
@@ -235,7 +229,6 @@ function ContactPage() {
       {/* ===== MAP SECTION ===== */}
       <section className="map">
         <h2>Find Me</h2>
-
         <iframe
           src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d417371.70963689976!2d128.7040100733377!3d35.188618370705385!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3568eb6de823cd35%3A0x35d8cb74247108a7!2sBusan%2C%20South%20Korea!5e0!3m2!1sen!2sph!4v1768828262893!5m2!1sen!2sph"
           width="600"

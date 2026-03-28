@@ -8,7 +8,11 @@ const AdminPage = () => {
   const [posts, setPosts] = useState([]);
   const [messages, setMessages] = useState([]);
   const [tab, setTab] = useState('users');
-  // New states for reply modal
+  const [loading, setLoading] = useState(true);
+
+  // Modals state
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingMessage, setViewingMessage] = useState(null);
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
@@ -16,6 +20,7 @@ const AdminPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const [usersRes, postsRes, messagesRes] = await Promise.all([
           API.get('/admin/users'),
@@ -27,6 +32,8 @@ const AdminPage = () => {
         setMessages(messagesRes.data);
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -59,10 +66,10 @@ const AdminPage = () => {
     }
   };
 
-  const viewMessage = (msg) => {
-    alert(
-      `From: ${msg.name} (${msg.email})\n\nMessage:\n${msg.message}\n\nSent: ${new Date(msg.createdAt).toLocaleString()}`
-    );
+  // Open view modal for a message
+  const openViewModal = (msg) => {
+    setViewingMessage(msg);
+    setShowViewModal(true);
   };
 
   // Open reply modal for a message
@@ -85,6 +92,7 @@ const AdminPage = () => {
       setShowReplyModal(false);
       setReplyingTo(null);
       setReplyText('');
+      // Optionally refresh messages to show reply inline? (if you later show replies in table)
     } catch (err) {
       console.error(err);
       alert('Failed to send reply. Check console for details.');
@@ -92,6 +100,8 @@ const AdminPage = () => {
       setSending(false);
     }
   };
+
+  if (loading) return <div className="loading">Loading dashboard...</div>;
 
   return (
     <div className="admin-page">
@@ -118,121 +128,155 @@ const AdminPage = () => {
         </button>
       </div>
 
+      {/* Users Table */}
       {tab === 'users' && (
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u._id}>
-                <td>{u.name}</td>
-                <td>{u.email}</td>
-                <td>
-                  <span className={`status-badge ${u.status}`}>{u.status}</span>
-                </td>
-                <td>
-                  <button
-                    onClick={() => toggleStatus(u._id)}
-                    className={u.status === 'active' ? 'btn-danger' : 'btn-success'}
-                  >
-                    {u.status === 'active' ? 'Deactivate' : 'Activate'}
-                  </button>
-                </td>
+        <div className="table-responsive">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      {tab === 'posts' && (
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Author</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {posts.map((p) => (
-              <tr key={p._id}>
-                <td>{p.title}</td>
-                <td>{p.author?.name}</td>
-                <td>
-                  <span className={`status-badge ${p.status}`}>{p.status}</span>
-                </td>
-                <td>
-                  {p.status === 'published' && (
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u._id}>
+                  <td>{u.name}</td>
+                  <td>{u.email}</td>
+                  <td>
+                    <span className={`status-badge ${u.status}`}>{u.status}</span>
+                  </td>
+                  <td>
                     <button
-                      className="btn-danger"
-                      onClick={() => removePost(p._id)}
+                      onClick={() => toggleStatus(u._id)}
+                      className={u.status === 'active' ? 'btn-danger' : 'btn-success'}
                     >
-                      Remove
+                      {u.status === 'active' ? 'Deactivate' : 'Activate'}
                     </button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
+      {/* Posts Table */}
+      {tab === 'posts' && (
+        <div className="table-responsive">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {posts.map((p) => (
+                <tr key={p._id}>
+                  <td>{p.title}</td>
+                  <td>{p.author?.name}</td>
+                  <td>
+                    <span className={`status-badge ${p.status}`}>{p.status}</span>
+                  </td>
+                  <td>
+                    {p.status === 'published' && (
+                      <button
+                        className="btn-danger"
+                        onClick={() => removePost(p._id)}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Messages Table */}
       {tab === 'messages' && (
         <div>
           {messages.length === 0 ? (
             <p>No messages yet.</p>
           ) : (
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Message</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {messages.map((msg) => (
-                  <tr key={msg._id}>
-                    <td>{msg.name}</td>
-                    <td>{msg.email}</td>
-                    <td>{msg.message.length > 50 ? msg.message.substring(0, 50) + '…' : msg.message}</td>
-                    <td>{new Date(msg.createdAt).toLocaleString()}</td>
-                    <td>
-                      <button
-                        className="btn-info"
-                        onClick={() => viewMessage(msg)}
-                        style={{ marginRight: '8px' }}
-                      >
-                        View
-                      </button>
-                      <button
-                        className="btn-primary"  // Style as you like
-                        onClick={() => openReplyModal(msg)}
-                        style={{ marginRight: '8px' }}
-                      >
-                        Reply
-                      </button>
-                      <button
-                        className="btn-danger"
-                        onClick={() => deleteMessage(msg._id)}
-                      >
-                        Delete
-                      </button>
-                    </td>
+            <div className="table-responsive">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Message</th>
+                    <th>Date</th>
+                    <th>Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {messages.map((msg) => (
+                    <tr key={msg._id}>
+                      <td>{msg.name}</td>
+                      <td>{msg.email}</td>
+                      <td className="message-preview">
+                        {msg.message.length > 50 ? msg.message.substring(0, 50) + '…' : msg.message}
+                      </td>
+                      <td>{new Date(msg.createdAt).toLocaleString()}</td>
+                      <td className="actions-cell">
+                        <button
+                          className="btn-info"
+                          onClick={() => openViewModal(msg)}
+                        >
+                          View
+                        </button>
+                        <button
+                          className="btn-primary"
+                          onClick={() => openReplyModal(msg)}
+                        >
+                          Reply
+                        </button>
+                        <button
+                          className="btn-danger"
+                          onClick={() => deleteMessage(msg._id)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
+        </div>
+      )}
+
+      {/* View Message Modal */}
+      {showViewModal && viewingMessage && (
+        <div className="modal-overlay" onClick={() => setShowViewModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Message from {viewingMessage.name}</h3>
+            <div className="view-message-details">
+              <p><strong>Email:</strong> {viewingMessage.email}</p>
+              <p><strong>Sent:</strong> {new Date(viewingMessage.createdAt).toLocaleString()}</p>
+              <hr />
+              <p><strong>Message:</strong></p>
+              <div className="full-message">{viewingMessage.message}</div>
+            </div>
+            <div className="modal-actions">
+              <button onClick={() => setShowViewModal(false)}>Close</button>
+              <button className="btn-primary" onClick={() => {
+                setShowViewModal(false);
+                openReplyModal(viewingMessage);
+              }}>
+                Reply
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -241,18 +285,17 @@ const AdminPage = () => {
         <div className="modal-overlay" onClick={() => setShowReplyModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h3>Reply to {replyingTo.name}</h3>
-            <p>
-              <strong>Original message:</strong><br />
-              {replyingTo.message}
-            </p>
+            <div className="reply-original">
+              <strong>Original message:</strong>
+              <div className="original-message-preview">{replyingTo.message}</div>
+            </div>
             <textarea
               rows="5"
               placeholder="Type your reply here..."
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              style={{ width: '100%', marginBottom: '10px' }}
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <div className="modal-actions">
               <button onClick={() => setShowReplyModal(false)} disabled={sending}>
                 Cancel
               </button>

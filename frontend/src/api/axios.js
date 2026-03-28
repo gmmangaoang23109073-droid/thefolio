@@ -1,8 +1,11 @@
 // frontend/src/api/axios.js
 import axios from "axios";
 
+// Use environment variable if available (set in Vercel), otherwise fallback to localhost
+const baseURL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
 const API = axios.create({
-  baseURL: "http://localhost:5000/api", // This is correct
+  baseURL: baseURL,
 });
 
 // Add token to requests
@@ -11,7 +14,7 @@ API.interceptors.request.use((req) => {
   if (token) {
     req.headers.Authorization = `Bearer ${token}`;
   }
-  console.log('📡 Request:', req.method, req.url); // Debug log
+  console.log('📡 Request:', req.method, req.url);
   return req;
 });
 

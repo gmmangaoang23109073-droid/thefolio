@@ -1,15 +1,17 @@
+const mongoose = require('mongoose');
+
 const replySchema = new mongoose.Schema({
   text: { type: String, required: true },
   createdAt: { type: Date, default: Date.now }
 });
 
 const messageSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  message: String,
-  replies: [replySchema],           // new field
-  adminReply: { type: String },     // keep old field for compatibility
-  repliedAt: { type: Date },        // keep old field
+  name: { type: String, required: true },
+  email: { type: String, required: true },
+  message: { type: String, required: true },
+  replies: [replySchema],
+  adminReply: { type: String },
+  repliedAt: { type: Date },
   createdAt: { type: Date, default: Date.now }
 });
 

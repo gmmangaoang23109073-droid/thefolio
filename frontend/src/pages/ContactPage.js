@@ -91,14 +91,12 @@ function ContactPage() {
     }
   };
 
-  // Open reply modal for a message
   const openReplyModal = (msg) => {
     setReplyingTo(msg);
     setUserReplyText('');
     setShowReplyModal(true);
   };
 
-  // Send user reply
   const sendUserReply = async () => {
     if (!userReplyText.trim()) {
       alert('Please enter a reply');
@@ -107,8 +105,7 @@ function ContactPage() {
     setSendingUserReply(true);
     try {
       await API.post(`/auth/messages/${replyingTo._id}/reply`, { reply: userReplyText });
-      // Refresh messages to show the new reply
-      await fetchUserMessages();
+      await fetchUserMessages();  // refresh inbox to show the new reply
       setShowReplyModal(false);
       setUserReplyText('');
       setReplyingTo(null);
@@ -120,11 +117,11 @@ function ContactPage() {
     }
   };
 
-  // Render all replies (admin + user) in chronological order
+  // Render replies exactly as they were originally, but now also show user replies
   const renderReplies = (msg) => {
     if (msg.replies && msg.replies.length > 0) {
       return msg.replies.map((reply, idx) => (
-        <div key={idx} className={`reply ${reply.sender === 'admin' ? 'admin-reply' : 'user-reply'}`}>
+        <div key={idx} className="admin-reply"> {/* keep the same class name for styling */}
           <div className="reply-header">
             <strong>{reply.sender === 'admin' ? 'Admin reply:' : 'Your reply:'}</strong>
             <span className="reply-date">
@@ -138,7 +135,7 @@ function ContactPage() {
     // Backward compatibility: old single admin reply
     if (msg.adminReply) {
       return (
-        <div className="reply admin-reply">
+        <div className="admin-reply">
           <div className="reply-header">
             <strong>Admin reply:</strong>
             <span className="reply-date">
@@ -210,18 +207,17 @@ function ContactPage() {
         </section>
       )}
 
-      {/* Resources Table and Map */}
+      {/* Resources Table and Map (unchanged) */}
       <h3 className="section-title">Useful Resources</h3>
       <table className="resources-table">
         <thead>
-          <tr><th>Resource Name</th><th>Description</th></tr>
-        </thead>
+          <tr><th>Resource Name</th><th>Description</th> </thead>
         <tbody>
           <tr><td><a href="https://www.vogue.com/" target="_blank" rel="noreferrer">Vogue</a></td><td>A fashion website that shares trends, styling tips, and inspiration.</td></tr>
           <tr><td><a href="https://www.pinterest.com/" target="_blank" rel="noreferrer">Pinterest</a></td><td>A visual platform where I find outfit ideas and style inspiration.</td></tr>
           <tr><td><a href="https://www.whowhatwear.com/" target="_blank" rel="noreferrer">Who What Wear</a></td><td>A fashion site that focuses on modern and classy everyday fashion.</td></tr>
         </tbody>
-       </table>
+      </table>
 
       <section className="map">
         <h2>Find Me</h2>

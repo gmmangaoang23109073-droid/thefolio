@@ -89,7 +89,6 @@ router.delete('/messages/:id', async (req, res) => {
 
 // ── POST /api/admin/messages/:id/reply — Save admin reply to a message
 router.post('/messages/:id/reply', async (req, res) => {
-  console.log('➡️ Reply endpoint called');
   try {
     const { id } = req.params;
     const { reply } = req.body;
@@ -97,14 +96,14 @@ router.post('/messages/:id/reply', async (req, res) => {
     const message = await Message.findById(id);
     if (!message) return res.status(404).json({ error: 'Message not found' });
 
-    message.adminReply = reply;
-    message.repliedAt = new Date();
+    // Add new reply to the array
+    message.replies.push({ text: reply, createdAt: new Date() });
     await message.save();
 
-    res.json({ success: true, message: 'Reply saved' });
+    res.json({ success: true, message: 'Reply added' });
   } catch (err) {
     console.error('Reply error:', err);
-    res.status(500).json({ error: err.message || 'Failed to save reply' });
+    res.status(500).json({ error: 'Failed to add reply' });
   }
 });
 

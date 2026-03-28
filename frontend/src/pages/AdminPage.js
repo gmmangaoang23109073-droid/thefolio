@@ -75,25 +75,49 @@ const AdminPage = () => {
     }
     setSendingReply(true);
     try {
-      await API.post(`/admin/messages/${selectedConversation._id}/reply`, { reply: replyText });
-      // Update local messages list to show the reply
-      setMessages(messages.map(m => m._id === selectedConversation._id
-        ? { ...m, adminReply: replyText, repliedAt: new Date().toISOString() }
-        : m));
-      setReplyText('');
-      // Update selected conversation
-      setSelectedConversation({
-        ...selectedConversation,
-        adminReply: replyText,
-        repliedAt: new Date().toISOString(),
-      });
-      alert('Reply sent successfully');
+      const res = await API.post(`/admin/messages/${selectedConversation._id}/reply`, { reply: replyText });
+      if (res.data.success) {
+        // Create a new reply object to add to the local state
+        const newReply = {
+          text: replyText,
+          createdAt: new Date().toISOString(),
+        };
+
+        // Update the selected conversation with the new reply
+        const updatedConversation = {
+          ...selectedConversation,
+          replies: [...(selectedConversation.replies || []), newReply],
+          // Also update legacy fields for backward compatibility (optional)
+          adminReply: replyText,
+          repliedAt: new Date().toISOString(),
+        };
+        setSelectedConversation(updatedConversation);
+
+        // Update the messages list to reflect the new reply
+        setMessages(messages.map(msg =>
+          msg._id === selectedConversation._id ? updatedConversation : msg
+        ));
+
+        setReplyText('');
+        alert('Reply sent successfully');
+      }
     } catch (err) {
       console.error(err);
       alert('Failed to send reply');
     } finally {
       setSendingReply(false);
     }
+  };
+
+  // Helper to get all replies (ordered) from a message
+  const getAllReplies = (message) => {
+    // If there's a replies array, use it; otherwise convert legacy single reply
+    if (message.replies && message.replies.length) {
+      return [...message.replies].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else if (message.adminReply) {
+      return [{ text: message.adminReply, createdAt: message.repliedAt || new Date() }];
+    }
+    return [];
   };
 
   if (loading) return <div className="loading">Loading dashboard...</div>;
@@ -180,15 +204,21 @@ const AdminPage = () => {
             <h3>Conversation with {selectedConversation.name}</h3>
             <div className="conversation-thread">
               <div className="user-message">
-                <div className="message-header"><strong>User:</strong> <span>{new Date(selectedConversation.createdAt).toLocaleString()}</span></div>
+                <div className="message-header">
+                  <strong>User:</strong>
+                  <span>{new Date(selectedConversation.createdAt).toLocaleString()}</span>
+                </div>
                 <div className="message-text">{selectedConversation.message}</div>
               </div>
-              {selectedConversation.adminReply && (
-                <div className="admin-message">
-                  <div className="message-header"><strong>Admin reply:</strong> <span>{new Date(selectedConversation.repliedAt).toLocaleString()}</span></div>
-                  <div className="message-text">{selectedConversation.adminReply}</div>
+              {getAllReplies(selectedConversation).map((reply, idx) => (
+                <div key={idx} className="admin-message">
+                  <div className="message-header">
+                    <strong>Admin reply:</strong>
+                    <span>{new Date(reply.createdAt).toLocaleString()}</span>
+                  </div>
+                  <div className="message-text">{reply.text}</div>
                 </div>
-              )}
+              ))}
             </div>
             <div className="reply-form">
               <textarea

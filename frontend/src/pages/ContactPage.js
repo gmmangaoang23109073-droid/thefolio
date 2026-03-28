@@ -87,6 +87,39 @@ function ContactPage() {
     }
   };
 
+  // Helper to render replies
+  const renderReplies = (msg) => {
+    // If we have a replies array, render each
+    if (msg.replies && msg.replies.length > 0) {
+      return msg.replies.map((reply, idx) => (
+        <div key={idx} className="admin-reply">
+          <div className="reply-header">
+            <strong>Admin reply:</strong>
+            <span className="reply-date">
+              {new Date(reply.createdAt).toLocaleString()}
+            </span>
+          </div>
+          <div className="reply-content">{reply.text}</div>
+        </div>
+      ));
+    }
+    // Backward compatibility: old single reply field
+    if (msg.adminReply) {
+      return (
+        <div className="admin-reply">
+          <div className="reply-header">
+            <strong>Admin reply:</strong>
+            <span className="reply-date">
+              {msg.repliedAt ? new Date(msg.repliedAt).toLocaleString() : "Date unknown"}
+            </span>
+          </div>
+          <div className="reply-content">{msg.adminReply}</div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="contact-page">
       {/* Contact Form */}
@@ -134,15 +167,7 @@ function ContactPage() {
                         <span className="message-date">{new Date(msg.createdAt).toLocaleString()}</span>
                       </div>
                       <div className="message-content">{msg.message}</div>
-                      {msg.adminReply && (
-                        <div className="admin-reply">
-                          <div className="reply-header">
-                            <strong>Admin reply:</strong>
-                            <span className="reply-date">{new Date(msg.repliedAt).toLocaleString()}</span>
-                          </div>
-                          <div className="reply-content">{msg.adminReply}</div>
-                        </div>
-                      )}
+                      {renderReplies(msg)}
                     </div>
                   ))}
                 </div>
@@ -152,16 +177,15 @@ function ContactPage() {
         </section>
       )}
 
-      {/* Resources Table and Map – keep as before */}
+      {/* Resources Table and Map */}
       <h3 className="section-title">Useful Resources</h3>
       <table className="resources-table">
-        <thead><tr><th>Resource Name</th><th>Description</th></tr></thead>
+        <thead>…
+        </thead>
         <tbody>
-          <tr><td><a href="https://www.vogue.com/" target="_blank" rel="noreferrer">Vogue</a></td><td>A fashion website that shares trends, styling tips, and inspiration.</td></tr>
-          <tr><td><a href="https://www.pinterest.com/" target="_blank" rel="noreferrer">Pinterest</a></td><td>A visual platform where I find outfit ideas and style inspiration.</td></tr>
-          <tr><td><a href="https://www.whowhatwear.com/" target="_blank" rel="noreferrer">Who What Wear</a></td><td>A fashion site that focuses on modern and classy everyday fashion.</td></tr>
+          …
         </tbody>
-      </table>
+       </table>
 
       <section className="map">
         <h2>Find Me</h2>

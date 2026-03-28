@@ -132,5 +132,9 @@ router.put('/change-password', protect, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+router.get('/messages', protect, async (req, res) => {
+  const messages = await Message.find({ email: req.user.email }).sort({ createdAt: -1 });
+  res.json(messages);
+});
 
 module.exports = router;

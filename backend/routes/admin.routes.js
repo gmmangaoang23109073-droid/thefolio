@@ -1,8 +1,7 @@
-// backend/routes/admin.routes.js
 const express = require('express');
 const User = require('../models/User');
 const Post = require('../models/Post');
-const Message = require('../models/Contact'); // only one import, adjust path if needed
+const Message = require('../models/Contact'); // adjust path if needed
 const { protect } = require('../middleware/auth.middleware');
 const { adminOnly } = require('../middleware/role.middleware');
 
@@ -11,7 +10,7 @@ const router = express.Router();
 // ── All routes below require: (1) valid token AND (2) admin role
 router.use(protect, adminOnly);
 
-// ── GET /api/admin/users — List all non-admin members
+// ── GET /api/admin/users — List all non‑admin members
 router.get('/users', async (req, res) => {
   try {
     const users = await User.find({ role: { $ne: 'admin' } })
@@ -68,14 +67,31 @@ router.put('/posts/:id/remove', async (req, res) => {
 
 // ==================== MESSAGE ROUTES ====================
 // ── GET /api/admin/messages — Retrieve all contact messages
-// ===== REPLY ROUTE =====
+router.get('/messages', async (req, res) => {
+  try {
+    const messages = await Message.find().sort({ createdAt: -1 });
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── DELETE /api/admin/messages/:id — Delete a specific message
+router.delete('/messages/:id', async (req, res) => {
+  try {
+    const message = await Message.findByIdAndDelete(req.params.id);
+    if (!message) return res.status(404).json({ message: 'Message not found' });
+    res.json({ message: 'Message deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── POST /api/admin/messages/:id/reply — Save admin reply to a message
 router.post('/messages/:id/reply', async (req, res) => {
   try {
     const { id } = req.params;
     const { reply } = req.body;
-
-    // Ensure the model is imported correctly (use the exact path to your message schema)
-    const Message = require('../models/Contact'); // or '../models/Message' depending on your file name
 
     const message = await Message.findById(id);
     if (!message) return res.status(404).json({ error: 'Message not found' });

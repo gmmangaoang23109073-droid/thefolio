@@ -1,16 +1,17 @@
 import React, { useState } from "react";
+import API from "../api/axios";
 import "../App.css";
 
 function ContactPage() {
-
-  // ===== FORM STATE =====
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: ""
   });
-
-  const [errors, setErrors] = useState({}); // Added error state
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const handleChange = (e) => {
     setFormData({
@@ -19,15 +20,14 @@ function ContactPage() {
     });
   };
 
-  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); // Email validation
+  const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     let newErrors = {};
     let isValid = true;
 
-    // ===== VALIDATIONS =====
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
       isValid = false;
@@ -49,15 +49,32 @@ function ContactPage() {
     setErrors(newErrors);
 
     if (isValid) {
-      alert("Message submitted successfully!");
+      setLoading(true);
+      setSubmitError("");
+      try {
+        await API.post("/contact", formData);
+        setSubmitSuccess(true);
+        setFormData({ name: "", email: "", message: "" });
+        setErrors({});
+        setTimeout(() => setSubmitSuccess(false), 3000);
+      } catch (err) {
+        console.error(err);
+        let errorMessage = "Failed to send message. ";
 
-      // reset form
-      setFormData({
-        name: "",
-        email: "",
-        message: ""
-      });
-      setErrors({});
+        if (err.response) {
+          errorMessage += `Status ${err.response.status}. `;
+          const details = err.response.data?.error || err.response.data?.message || JSON.stringify(err.response.data);
+          errorMessage += details;
+        } else if (err.request) {
+          errorMessage += "No response from server. Check if backend is running.";
+        } else {
+          errorMessage += err.message;
+        }
+
+        setSubmitError(errorMessage);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -79,7 +96,7 @@ function ContactPage() {
             value={formData.name}
             onChange={handleChange}
           />
-          <span className="error">{errors.name}</span> {/* Error display */}
+          <span className="error">{errors.name}</span>
 
           <label htmlFor="email">Email:</label>
           <input
@@ -90,7 +107,7 @@ function ContactPage() {
             value={formData.email}
             onChange={handleChange}
           />
-          <span className="error">{errors.email}</span> {/* Error display */}
+          <span className="error">{errors.email}</span>
 
           <label htmlFor="message">Message:</label>
           <textarea
@@ -100,9 +117,16 @@ function ContactPage() {
             value={formData.message}
             onChange={handleChange}
           ></textarea>
-          <span className="error">{errors.message}</span> {/* Error display */}
+          <span className="error">{errors.message}</span>
 
-          <button type="submit">Submit</button>
+          {submitSuccess && (
+            <div className="success-message">Message sent successfully!</div>
+          )}
+          {submitError && <div className="error-message">{submitError}</div>}
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Sending..." : "Submit"}
+          </button>
         </form>
       </section>
 

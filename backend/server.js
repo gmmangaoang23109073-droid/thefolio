@@ -1,4 +1,3 @@
-// backend/server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -10,6 +9,7 @@ const authRoutes = require('./routes/auth.routes');
 const postRoutes = require('./routes/post.routes');
 const adminRoutes = require('./routes/admin.routes');
 const commentRoutes = require('./routes/comment.routes');
+const contactRoutes = require('./routes/contact.routes'); // <-- ADD
 
 const app = express();
 
@@ -26,12 +26,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/comments', commentRoutes);
+app.use('/api/contact', contactRoutes); // <-- ADD
 
 // Test route
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Server is running!' });
 });
-
+app.get('/api/contact/test-direct', (req, res) => {
+  res.json({ message: 'Direct route works' });
+});
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/chic-journal')
   .then(() => console.log('✅ Connected to MongoDB'))

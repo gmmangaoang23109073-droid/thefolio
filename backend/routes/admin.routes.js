@@ -1,8 +1,8 @@
 // backend/routes/admin.routes.js
-
 const express = require('express');
 const User = require('../models/User');
 const Post = require('../models/Post');
+const Message = require('../models/Message');  // <-- NEW
 const { protect } = require('../middleware/auth.middleware');
 const { adminOnly } = require('../middleware/role.middleware');
 
@@ -63,6 +63,28 @@ router.put('/posts/:id/remove', async (req, res) => {
     await post.save();
 
     res.json({ message: 'Post has been removed', post });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ==================== NEW MESSAGE ROUTES ====================
+// ── GET /api/admin/messages — Retrieve all contact messages (newest first)
+router.get('/messages', async (req, res) => {
+  try {
+    const messages = await Message.find().sort({ createdAt: -1 });
+    res.json(messages);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ── DELETE /api/admin/messages/:id — Delete a specific message
+router.delete('/messages/:id', async (req, res) => {
+  try {
+    const message = await Message.findByIdAndDelete(req.params.id);
+    if (!message) return res.status(404).json({ message: 'Message not found' });
+    res.json({ message: 'Message deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

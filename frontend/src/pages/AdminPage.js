@@ -1,16 +1,31 @@
 // frontend/src/pages/AdminPage.js
 import { useState, useEffect } from 'react';
 import API from '../api/axios';
-import '../App.css'; // include your styles
+import '../App.css';
 
 const AdminPage = () => {
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
+  const [messages, setMessages] = useState([]); // NEW
   const [tab, setTab] = useState('users');
 
   useEffect(() => {
-    API.get('/admin/users').then((res) => setUsers(res.data));
-    API.get('/admin/posts').then((res) => setPosts(res.data));
+    // Fetch all data – now includes messages
+    const fetchData = async () => {
+      try {
+        const [usersRes, postsRes, messagesRes] = await Promise.all([
+          API.get('/admin/users'),
+          API.get('/admin/posts'),
+          API.get('/admin/messages'), // NEW
+        ]);
+        setUsers(usersRes.data);
+        setPosts(postsRes.data);
+        setMessages(messagesRes.data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchData();
   }, []);
 
   const toggleStatus = async (id) => {
@@ -26,6 +41,16 @@ const AdminPage = () => {
     try {
       await API.put(`/admin/posts/${id}/remove`);
       setPosts(posts.map((p) => (p._id === id ? { ...p, status: 'removed' } : p)));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // NEW: delete a message
+  const deleteMessage = async (id) => {
+    try {
+      await API.delete(`/admin/messages/${id}`);
+      setMessages(messages.filter((msg) => msg._id !== id));
     } catch (err) {
       console.error(err);
     }
@@ -47,6 +72,13 @@ const AdminPage = () => {
           className={tab === 'posts' ? 'active' : ''}
         >
           All Posts ({posts.length})
+        </button>
+        {/* NEW Messages tab */}
+        <button
+          onClick={() => setTab('messages')}
+          className={tab === 'messages' ? 'active' : ''}
+        >
+          Messages ({messages.length})
         </button>
       </div>
 
@@ -114,6 +146,45 @@ const AdminPage = () => {
             ))}
           </tbody>
         </table>
+      )}
+
+      {/* NEW: Messages tab content */}
+      {tab === 'messages' && (
+        <div>
+          {messages.length === 0 ? (
+            <p>No messages yet.</p>
+          ) : (
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Message</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {messages.map((msg) => (
+                  <tr key={msg._id}>
+                    <td>{msg.name}</td>
+                    <td>{msg.email}</td>
+                    <td>{msg.message}</td>
+                    <td>{new Date(msg.createdAt).toLocaleString()}</td>
+                    <td>
+                      <button
+                        className="btn-danger"
+                        onClick={() => deleteMessage(msg._id)}
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       )}
     </div>
   );

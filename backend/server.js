@@ -14,24 +14,25 @@ const contactRoutes = require('./routes/contact.routes');
 const app = express();
 
 // --- CORS Configuration ---
-// Allow only specific origins (localhost for development, your Vercel app for production)
+// Allow localhost, your production Vercel app, and any Vercel preview URL
 const allowedOrigins = [
   'http://localhost:3000',                      // Local React dev server
-  'https://thefolio-rust.vercel.app',           // Your live frontend (update if changed)
-  // Add any other frontend URLs (e.g., preview deployments)
+  'https://thefolio-rust.vercel.app',           // Your production frontend
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    
+    // Allow if origin is in explicit list OR is a Vercel preview URL
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true, // If your frontend sends cookies/auth headers
+  credentials: true,
 }));
 
 // Body parsers

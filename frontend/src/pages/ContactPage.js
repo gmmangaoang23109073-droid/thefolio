@@ -12,6 +12,10 @@ function ContactPage() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [userReplyText, setUserReplyText] = useState('');
+  const [sendingUserReply, setSendingUserReply] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -87,14 +91,42 @@ function ContactPage() {
     }
   };
 
-  // Helper to render replies
+  // Open reply modal for a message
+  const openReplyModal = (msg) => {
+    setReplyingTo(msg);
+    setUserReplyText('');
+    setShowReplyModal(true);
+  };
+
+  // Send user reply
+  const sendUserReply = async () => {
+    if (!userReplyText.trim()) {
+      alert('Please enter a reply');
+      return;
+    }
+    setSendingUserReply(true);
+    try {
+      await API.post(`/auth/messages/${replyingTo._id}/reply`, { reply: userReplyText });
+      // Refresh messages to show the new reply
+      await fetchUserMessages();
+      setShowReplyModal(false);
+      setUserReplyText('');
+      setReplyingTo(null);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send reply. Please try again.');
+    } finally {
+      setSendingUserReply(false);
+    }
+  };
+
+  // Render all replies (admin + user) in chronological order
   const renderReplies = (msg) => {
-    // If we have a replies array, render each
     if (msg.replies && msg.replies.length > 0) {
       return msg.replies.map((reply, idx) => (
-        <div key={idx} className="admin-reply">
+        <div key={idx} className={`reply ${reply.sender === 'admin' ? 'admin-reply' : 'user-reply'}`}>
           <div className="reply-header">
-            <strong>Admin reply:</strong>
+            <strong>{reply.sender === 'admin' ? 'Admin reply:' : 'Your reply:'}</strong>
             <span className="reply-date">
               {new Date(reply.createdAt).toLocaleString()}
             </span>
@@ -103,10 +135,10 @@ function ContactPage() {
         </div>
       ));
     }
-    // Backward compatibility: old single reply field
+    // Backward compatibility: old single admin reply
     if (msg.adminReply) {
       return (
-        <div className="admin-reply">
+        <div className="reply admin-reply">
           <div className="reply-header">
             <strong>Admin reply:</strong>
             <span className="reply-date">
@@ -168,6 +200,7 @@ function ContactPage() {
                       </div>
                       <div className="message-content">{msg.message}</div>
                       {renderReplies(msg)}
+                      <button className="btn-reply" onClick={() => openReplyModal(msg)}>Reply</button>
                     </div>
                   ))}
                 </div>
@@ -180,10 +213,13 @@ function ContactPage() {
       {/* Resources Table and Map */}
       <h3 className="section-title">Useful Resources</h3>
       <table className="resources-table">
-        <thead>…
+        <thead>
+          <tr><th>Resource Name</th><th>Description</th></tr>
         </thead>
         <tbody>
-          …
+          <tr><td><a href="https://www.vogue.com/" target="_blank" rel="noreferrer">Vogue</a></td><td>A fashion website that shares trends, styling tips, and inspiration.</td></tr>
+          <tr><td><a href="https://www.pinterest.com/" target="_blank" rel="noreferrer">Pinterest</a></td><td>A visual platform where I find outfit ideas and style inspiration.</td></tr>
+          <tr><td><a href="https://www.whowhatwear.com/" target="_blank" rel="noreferrer">Who What Wear</a></td><td>A fashion site that focuses on modern and classy everyday fashion.</td></tr>
         </tbody>
        </table>
 
@@ -191,6 +227,31 @@ function ContactPage() {
         <h2>Find Me</h2>
         <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d417371.70963689976!2d128.7040100733377!3d35.188618370705385!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3568eb6de823cd35%3A0x35d8cb74247108a7!2sBusan%2C%20South%20Korea!5e0!3m2!1sen!2sph!4v1768828262893!5m2!1sen!2sph" width="600" height="450" style={{ border: 0 }} allowFullScreen loading="lazy" title="Busan Map"></iframe>
       </section>
+
+      {/* Reply Modal */}
+      {showReplyModal && replyingTo && (
+        <div className="modal-overlay" onClick={() => setShowReplyModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Reply to message</h3>
+            <div className="original-message">
+              <strong>Original message:</strong>
+              <div>{replyingTo.message}</div>
+            </div>
+            <textarea
+              rows="4"
+              placeholder="Type your reply..."
+              value={userReplyText}
+              onChange={(e) => setUserReplyText(e.target.value)}
+            />
+            <div className="modal-actions">
+              <button onClick={() => setShowReplyModal(false)} disabled={sendingUserReply}>Cancel</button>
+              <button onClick={sendUserReply} disabled={sendingUserReply}>
+                {sendingUserReply ? 'Sending...' : 'Send Reply'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

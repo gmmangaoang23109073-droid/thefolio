@@ -77,9 +77,10 @@ const AdminPage = () => {
     try {
       const res = await API.post(`/admin/messages/${selectedConversation._id}/reply`, { reply: replyText });
       if (res.data.success) {
-        // Create a new reply object to add to the local state
+        // Create a new reply object with sender 'admin'
         const newReply = {
           text: replyText,
+          sender: 'admin',
           createdAt: new Date().toISOString(),
         };
 
@@ -87,7 +88,7 @@ const AdminPage = () => {
         const updatedConversation = {
           ...selectedConversation,
           replies: [...(selectedConversation.replies || []), newReply],
-          // Also update legacy fields for backward compatibility (optional)
+          // Update legacy fields for backward compatibility
           adminReply: replyText,
           repliedAt: new Date().toISOString(),
         };
@@ -111,11 +112,11 @@ const AdminPage = () => {
 
   // Helper to get all replies (ordered) from a message
   const getAllReplies = (message) => {
-    // If there's a replies array, use it; otherwise convert legacy single reply
     if (message.replies && message.replies.length) {
       return [...message.replies].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     } else if (message.adminReply) {
-      return [{ text: message.adminReply, createdAt: message.repliedAt || new Date() }];
+      // Convert legacy single reply to a reply object with sender 'admin'
+      return [{ text: message.adminReply, sender: 'admin', createdAt: message.repliedAt || new Date() }];
     }
     return [];
   };
@@ -142,7 +143,14 @@ const AdminPage = () => {
       {tab === 'users' && (
         <div className="table-responsive">
           <table className="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
             <tbody>
               {users.map(u => (
                 <tr key={u._id}>
@@ -160,7 +168,14 @@ const AdminPage = () => {
       {tab === 'posts' && (
         <div className="table-responsive">
           <table className="admin-table">
-            <thead><tr><th>Title</th><th>Author</th><th>Status</th><th>Action</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
             <tbody>
               {posts.map(p => (
                 <tr key={p._id}>
@@ -178,7 +193,15 @@ const AdminPage = () => {
       {tab === 'messages' && (
         <div className="table-responsive">
           <table className="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Message</th><th>Date</th><th>Actions</th></tr></thead>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Message</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
             <tbody>
               {messages.map(msg => (
                 <tr key={msg._id}>
@@ -203,6 +226,7 @@ const AdminPage = () => {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <h3>Conversation with {selectedConversation.name}</h3>
             <div className="conversation-thread">
+              {/* Original user message */}
               <div className="user-message">
                 <div className="message-header">
                   <strong>User:</strong>
@@ -210,10 +234,11 @@ const AdminPage = () => {
                 </div>
                 <div className="message-text">{selectedConversation.message}</div>
               </div>
+              {/* Replies (both user and admin) */}
               {getAllReplies(selectedConversation).map((reply, idx) => (
-                <div key={idx} className="admin-message">
+                <div key={idx} className={reply.sender === 'admin' ? 'admin-message' : 'user-message-reply'}>
                   <div className="message-header">
-                    <strong>Admin reply:</strong>
+                    <strong>{reply.sender === 'admin' ? 'Admin reply:' : 'User reply:'}</strong>
                     <span>{new Date(reply.createdAt).toLocaleString()}</span>
                   </div>
                   <div className="message-text">{reply.text}</div>

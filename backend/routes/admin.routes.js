@@ -96,8 +96,11 @@ router.post('/messages/:id/reply', async (req, res) => {
     const message = await Message.findById(id);
     if (!message) return res.status(404).json({ error: 'Message not found' });
 
-    // Add new reply to the array
-    message.replies.push({ text: reply, createdAt: new Date() });
+    // Add new reply to the array with sender 'admin'
+    message.replies.push({ text: reply, sender: 'admin', createdAt: new Date() });
+    // Also update legacy fields for backward compatibility
+    message.adminReply = reply;
+    message.repliedAt = new Date();
     await message.save();
 
     res.json({ success: true, message: 'Reply added' });

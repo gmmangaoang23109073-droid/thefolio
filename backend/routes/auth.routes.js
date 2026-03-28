@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const Message = require('../models/Message');   // Message model
+const Message = require('../models/Message');
 const { protect } = require('../middleware/auth.middleware');
 const upload = require('../middleware/upload');
 const router = express.Router();
@@ -25,7 +25,6 @@ router.post('/register', async (req, res) => {
     const user = await User.create({ name, email: normalizedEmail, password });
     console.log('✅ User created with ID:', user._id);
 
-    // Include email and role in token
     const token = generateToken(user._id, user.email, user.role);
     console.log('✅ Token generated');
 
@@ -64,7 +63,6 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('✅ Login successful for:', normalizedEmail);
-    // Include email and role in token
     res.json({
       token: generateToken(user._id, user.email, user.role),
       user: { _id: user._id, name: user.name, email: user.email, role: user.role, profilePic: user.profilePic }
@@ -78,7 +76,6 @@ router.post('/login', async (req, res) => {
 // ── GET /api/auth/me ──────────────────────────────────────────
 router.get('/me', protect, async (req, res) => {
   try {
-    // req.user is set by protect middleware (includes id, email, role)
     const user = await User.findById(req.user.id).select('-password');
     res.json(user);
   } catch (err) {
@@ -88,7 +85,6 @@ router.get('/me', protect, async (req, res) => {
 });
 
 // ── GET /api/auth/messages ────────────────────────────────────
-// Returns all messages sent by the currently logged‑in user (by email)
 router.get('/messages', protect, async (req, res) => {
   try {
     const messages = await Message.find({ email: req.user.email }).sort({ createdAt: -1 });
@@ -96,6 +92,32 @@ router.get('/messages', protect, async (req, res) => {
   } catch (err) {
     console.error('🔥 /messages error:', err);
     res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// ── POST /api/auth/messages/:id/reply ─────────────────────────
+// User replies to a message (their own thread)
+router.post('/messages/:id/reply', protect, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reply } = req.body;
+
+    const message = await Message.findById(id);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+
+    // Verify ownership
+    if (message.email !== req.user.email) {
+      return res.status(403).json({ error: 'You can only reply to your own messages' });
+    }
+
+    // Add user reply to the replies array
+    message.replies.push({ text: reply, sender: 'user', createdAt: new Date() });
+    await message.save();
+
+    res.json({ success: true, message: 'Reply added' });
+  } catch (err) {
+    console.error('User reply error:', err);
+    res.status(500).json({ error: 'Failed to add reply' });
   }
 });
 
@@ -124,17 +146,13 @@ router.put('/change-password', protect, async (req, res) => {
     if (!match) {
       return res.status(400).json({ message: 'Current password is incorrect' });
     }
-    user.password = newPassword; // pre-save hook will hash this
+    user.password = newPassword;
     await user.save();
     res.json({ message: 'Password updated successfully' });
   } catch (err) {
     console.error('🔥 Change password error:', err);
     res.status(500).json({ message: err.message });
   }
-});
-router.get('/messages', protect, async (req, res) => {
-  const messages = await Message.find({ email: req.user.email }).sort({ createdAt: -1 });
-  res.json(messages);
 });
 
 module.exports = router;

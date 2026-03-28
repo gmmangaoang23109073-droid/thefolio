@@ -5200,3 +5200,14 @@ body.dark-mode .btn-danger {
   font-size: 0.7rem;
   color: #888;
 }
+.user-reply {
+  background: #e8f0fe;
+  border-left: 3px solid #3b82f6;
+}
+
+.user-message-reply {
+  background: #eef2ff;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}

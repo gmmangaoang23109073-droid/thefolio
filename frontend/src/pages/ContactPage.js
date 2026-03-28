@@ -105,7 +105,7 @@ function ContactPage() {
     setSendingUserReply(true);
     try {
       await API.post(`/auth/messages/${replyingTo._id}/reply`, { reply: userReplyText });
-      await fetchUserMessages();  // refresh inbox to show the new reply
+      await fetchUserMessages();  // refresh inbox
       setShowReplyModal(false);
       setUserReplyText('');
       setReplyingTo(null);
@@ -117,11 +117,10 @@ function ContactPage() {
     }
   };
 
-  // Render replies exactly as they were originally, but now also show user replies
   const renderReplies = (msg) => {
     if (msg.replies && msg.replies.length > 0) {
       return msg.replies.map((reply, idx) => (
-        <div key={idx} className="admin-reply"> {/* keep the same class name for styling */}
+        <div key={idx} className="admin-reply">
           <div className="reply-header">
             <strong>{reply.sender === 'admin' ? 'Admin reply:' : 'Your reply:'}</strong>
             <span className="reply-date">
@@ -132,7 +131,6 @@ function ContactPage() {
         </div>
       ));
     }
-    // Backward compatibility: old single admin reply
     if (msg.adminReply) {
       return (
         <div className="admin-reply">
@@ -174,7 +172,7 @@ function ContactPage() {
         </form>
       </section>
 
-      {/* Inbox – only for logged-in users */}
+      {/* Inbox */}
       {isLoggedIn && (
         <section className="inbox-section">
           <button className="inbox-toggle-btn" onClick={() => setInboxOpen(!inboxOpen)}>
@@ -207,21 +205,43 @@ function ContactPage() {
         </section>
       )}
 
-      {/* Resources Table and Map (unchanged) */}
+      {/* Resources Table */}
       <h3 className="section-title">Useful Resources</h3>
       <table className="resources-table">
         <thead>
-          <tr><th>Resource Name</th><th>Description</th> </thead>
+          <tr>
+            <th>Resource Name</th>
+            <th>Description</th>
+          </tr>
+        </thead>
         <tbody>
-          <tr><td><a href="https://www.vogue.com/" target="_blank" rel="noreferrer">Vogue</a></td><td>A fashion website that shares trends, styling tips, and inspiration.</td></tr>
-          <tr><td><a href="https://www.pinterest.com/" target="_blank" rel="noreferrer">Pinterest</a></td><td>A visual platform where I find outfit ideas and style inspiration.</td></tr>
-          <tr><td><a href="https://www.whowhatwear.com/" target="_blank" rel="noreferrer">Who What Wear</a></td><td>A fashion site that focuses on modern and classy everyday fashion.</td></tr>
+          <tr>
+            <td><a href="https://www.vogue.com/" target="_blank" rel="noreferrer">Vogue</a></td>
+            <td>A fashion website that shares trends, styling tips, and inspiration.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.pinterest.com/" target="_blank" rel="noreferrer">Pinterest</a></td>
+            <td>A visual platform where I find outfit ideas and style inspiration.</td>
+          </tr>
+          <tr>
+            <td><a href="https://www.whowhatwear.com/" target="_blank" rel="noreferrer">Who What Wear</a></td>
+            <td>A fashion site that focuses on modern and classy everyday fashion.</td>
+          </tr>
         </tbody>
       </table>
 
+      {/* Map */}
       <section className="map">
         <h2>Find Me</h2>
-        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d417371.70963689976!2d128.7040100733377!3d35.188618370705385!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3568eb6de823cd35%3A0x35d8cb74247108a7!2sBusan%2C%20South%20Korea!5e0!3m2!1sen!2sph!4v1768828262893!5m2!1sen!2sph" width="600" height="450" style={{ border: 0 }} allowFullScreen loading="lazy" title="Busan Map"></iframe>
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d417371.70963689976!2d128.7040100733377!3d35.188618370705385!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3568eb6de823cd35%3A0x35d8cb74247108a7!2sBusan%2C%20South%20Korea!5e0!3m2!1sen!2sph!4v1768828262893!5m2!1sen!2sph"
+          width="600"
+          height="450"
+          style={{ border: 0 }}
+          allowFullScreen
+          loading="lazy"
+          title="Busan Map"
+        ></iframe>
       </section>
 
       {/* Reply Modal */}

@@ -2,7 +2,7 @@
 const express = require('express');
 const User = require('../models/User');
 const Post = require('../models/Post');
-const Message = require('../models/Message');  // <-- NEW
+const Message = require('../models/Contact'); // only one import, adjust path if needed
 const { protect } = require('../middleware/auth.middleware');
 const { adminOnly } = require('../middleware/role.middleware');
 
@@ -17,7 +17,6 @@ router.get('/users', async (req, res) => {
     const users = await User.find({ role: { $ne: 'admin' } })
       .select('-password')
       .sort({ createdAt: -1 });
-
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -46,14 +45,13 @@ router.get('/posts', async (req, res) => {
     const posts = await Post.find()
       .populate('author', 'name email')
       .sort({ createdAt: -1 });
-
     res.json(posts);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// ── PUT /api/admin/posts/:id/remove — Mark post as removed (inappropriate)
+// ── PUT /api/admin/posts/:id/remove — Mark post as removed
 router.put('/posts/:id/remove', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -68,8 +66,8 @@ router.put('/posts/:id/remove', async (req, res) => {
   }
 });
 
-// ==================== NEW MESSAGE ROUTES ====================
-// ── GET /api/admin/messages — Retrieve all contact messages (newest first)
+// ==================== MESSAGE ROUTES ====================
+// ── GET /api/admin/messages — Retrieve all contact messages
 router.get('/messages', async (req, res) => {
   try {
     const messages = await Message.find().sort({ createdAt: -1 });
@@ -87,6 +85,29 @@ router.delete('/messages/:id', async (req, res) => {
     res.json({ message: 'Message deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// ── POST /api/admin/messages/:id/reply — Save admin reply to a message
+router.post('/messages/:id/reply', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reply } = req.body;
+
+    const message = await Message.findById(id);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+
+    message.adminReply = reply;
+    message.repliedAt = new Date();
+    await message.save();
+
+    // (Optional) send email notification if you have nodemailer set up
+    // await sendReplyEmail(message.email, message.name, reply);
+
+    res.json({ success: true, message: 'Reply saved' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save reply' });
   }
 });
 

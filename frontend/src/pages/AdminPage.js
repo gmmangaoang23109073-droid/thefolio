@@ -6,17 +6,21 @@ import '../App.css';
 const AdminPage = () => {
   const [users, setUsers] = useState([]);
   const [posts, setPosts] = useState([]);
-  const [messages, setMessages] = useState([]); // NEW
+  const [messages, setMessages] = useState([]);
   const [tab, setTab] = useState('users');
+  // New states for reply modal
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
-    // Fetch all data – now includes messages
     const fetchData = async () => {
       try {
         const [usersRes, postsRes, messagesRes] = await Promise.all([
           API.get('/admin/users'),
           API.get('/admin/posts'),
-          API.get('/admin/messages'), // NEW
+          API.get('/admin/messages'),
         ]);
         setUsers(usersRes.data);
         setPosts(postsRes.data);
@@ -46,13 +50,46 @@ const AdminPage = () => {
     }
   };
 
-  // NEW: delete a message
   const deleteMessage = async (id) => {
     try {
       await API.delete(`/admin/messages/${id}`);
       setMessages(messages.filter((msg) => msg._id !== id));
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const viewMessage = (msg) => {
+    alert(
+      `From: ${msg.name} (${msg.email})\n\nMessage:\n${msg.message}\n\nSent: ${new Date(msg.createdAt).toLocaleString()}`
+    );
+  };
+
+  // Open reply modal for a message
+  const openReplyModal = (msg) => {
+    setReplyingTo(msg);
+    setReplyText('');
+    setShowReplyModal(true);
+  };
+
+  // Send the reply
+  const sendReply = async () => {
+    if (!replyText.trim()) {
+      alert('Please enter a reply message');
+      return;
+    }
+    setSending(true);
+    try {
+      await API.post(`/admin/messages/${replyingTo._id}/reply`, { reply: replyText });
+      alert('Reply sent successfully!');
+      setShowReplyModal(false);
+      setReplyingTo(null);
+      setReplyText('');
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send reply. Check console for details.');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -73,7 +110,6 @@ const AdminPage = () => {
         >
           All Posts ({posts.length})
         </button>
-        {/* NEW Messages tab */}
         <button
           onClick={() => setTab('messages')}
           className={tab === 'messages' ? 'active' : ''}
@@ -148,7 +184,6 @@ const AdminPage = () => {
         </table>
       )}
 
-      {/* NEW: Messages tab content */}
       {tab === 'messages' && (
         <div>
           {messages.length === 0 ? (
@@ -161,7 +196,7 @@ const AdminPage = () => {
                   <th>Email</th>
                   <th>Message</th>
                   <th>Date</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -169,9 +204,23 @@ const AdminPage = () => {
                   <tr key={msg._id}>
                     <td>{msg.name}</td>
                     <td>{msg.email}</td>
-                    <td>{msg.message}</td>
+                    <td>{msg.message.length > 50 ? msg.message.substring(0, 50) + '…' : msg.message}</td>
                     <td>{new Date(msg.createdAt).toLocaleString()}</td>
                     <td>
+                      <button
+                        className="btn-info"
+                        onClick={() => viewMessage(msg)}
+                        style={{ marginRight: '8px' }}
+                      >
+                        View
+                      </button>
+                      <button
+                        className="btn-primary"  // Style as you like
+                        onClick={() => openReplyModal(msg)}
+                        style={{ marginRight: '8px' }}
+                      >
+                        Reply
+                      </button>
                       <button
                         className="btn-danger"
                         onClick={() => deleteMessage(msg._id)}
@@ -184,6 +233,34 @@ const AdminPage = () => {
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {/* Reply Modal */}
+      {showReplyModal && replyingTo && (
+        <div className="modal-overlay" onClick={() => setShowReplyModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Reply to {replyingTo.name}</h3>
+            <p>
+              <strong>Original message:</strong><br />
+              {replyingTo.message}
+            </p>
+            <textarea
+              rows="5"
+              placeholder="Type your reply here..."
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              style={{ width: '100%', marginBottom: '10px' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button onClick={() => setShowReplyModal(false)} disabled={sending}>
+                Cancel
+              </button>
+              <button onClick={sendReply} disabled={sending}>
+                {sending ? 'Sending...' : 'Send Reply'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import API from "../api/axios";
 import "../App.css";
 
@@ -12,6 +12,30 @@ function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      setIsLoggedIn(true);
+      fetchUserMessages();
+    }
+  }, []);
+
+  const fetchUserMessages = async () => {
+    setMessagesLoading(true);
+    try {
+      const res = await API.get('/auth/messages');
+      setMessages(res.data);
+    } catch (err) {
+      console.error('Failed to fetch messages:', err);
+    } finally {
+      setMessagesLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -57,6 +81,10 @@ function ContactPage() {
         setFormData({ name: "", email: "", message: "" });
         setErrors({});
         setTimeout(() => setSubmitSuccess(false), 3000);
+        // If logged in, refresh messages list
+        if (isLoggedIn) {
+          fetchUserMessages();
+        }
       } catch (err) {
         console.error(err);
         let errorMessage = "Failed to send message. ";
@@ -80,6 +108,34 @@ function ContactPage() {
 
   return (
     <div>
+      {/* ===== INBOX SECTION ===== */}
+      {isLoggedIn && (
+        <section className="inbox-section">
+          <h2 className="inbox-title">My Inbox</h2>
+          {messagesLoading ? (
+            <p>Loading messages...</p>
+          ) : messages.length === 0 ? (
+            <p>You have no messages yet. Use the form below to send one.</p>
+          ) : (
+            <div className="inbox-list">
+              {messages.map((msg) => (
+                <div key={msg._id} className="message-card">
+                  <div className="message-header">
+                    <strong>You:</strong> {new Date(msg.createdAt).toLocaleString()}
+                  </div>
+                  <div className="message-content">{msg.message}</div>
+                  {msg.adminReply && (
+                    <div className="admin-reply">
+                      <strong>Admin reply:</strong> {msg.adminReply}
+                      <div className="reply-date">{new Date(msg.repliedAt).toLocaleString()}</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ===== CONTACT SECTION ===== */}
       <section className="contact-content">
@@ -190,7 +246,6 @@ function ContactPage() {
           title="Busan Map"
         ></iframe>
       </section>
-
     </div>
   );
 }

@@ -1,7 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const Post = require('../models/Post');
-const Message = require('../models/Contact'); // ← adjust this path if your model file is different (e.g., '../models/Message')
+const Message = require('../models/Message'); // ← CHANGED to Message model
 const { protect } = require('../middleware/auth.middleware');
 const { adminOnly } = require('../middleware/role.middleware');
 
@@ -89,7 +89,7 @@ router.delete('/messages/:id', async (req, res) => {
 
 // ── POST /api/admin/messages/:id/reply — Save admin reply to a message
 router.post('/messages/:id/reply', async (req, res) => {
-  console.log('➡️ Reply endpoint called');  // ← ADDED for debugging
+  console.log('➡️ Reply endpoint called');
   try {
     const { id } = req.params;
     const { reply } = req.body;

@@ -97,6 +97,7 @@ router.get('/messages', protect, async (req, res) => {
 
 // ── POST /api/auth/messages/:id/reply ─────────────────────────
 // User replies to a message (their own thread)
+// POST /api/auth/messages/:id/reply
 router.post('/messages/:id/reply', protect, async (req, res) => {
   try {
     const { id } = req.params;
@@ -110,8 +111,16 @@ router.post('/messages/:id/reply', protect, async (req, res) => {
       return res.status(403).json({ error: 'You can only reply to your own messages' });
     }
 
-    // Add user reply to the replies array
-    message.replies.push({ text: reply, sender: 'user', createdAt: new Date() });
+    // Ensure replies array exists
+    if (!message.replies) message.replies = [];
+
+    // Add new reply
+    message.replies.push({
+      text: reply,
+      sender: 'user',
+      createdAt: new Date()
+    });
+
     await message.save();
 
     res.json({ success: true, message: 'Reply added' });

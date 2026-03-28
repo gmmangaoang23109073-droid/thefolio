@@ -10,8 +10,8 @@ const messageSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true },
   message: { type: String, required: true },
-  replies: [replySchema],              // array of all replies (user + admin)
-  // legacy fields (will be removed after migration)
+  replies: { type: [replySchema], default: [] },
+  // legacy fields (optional, keep for backward compatibility)
   adminReply: { type: String },
   repliedAt: { type: Date },
   createdAt: { type: Date, default: Date.now }

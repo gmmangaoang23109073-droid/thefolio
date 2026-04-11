@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
+import { BACKEND_URL } from '../config';  // <-- ADD
 import '../App.css';
 
 const PostPage = () => {
@@ -15,13 +16,6 @@ const PostPage = () => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  // Get base URL for locally stored images (development only)
-  const getImageBaseUrl = () => {
-    // In production, images are served from Cloudinary (full URLs)
-    if (process.env.NODE_ENV === 'production') return '';
-    return 'http://localhost:5000/uploads/';
-  };
 
   const fetchPost = useCallback(async () => {
     try {
@@ -54,12 +48,9 @@ const PostPage = () => {
       navigate('/login');
       return;
     }
-
     setSubmitting(true);
     try {
-      const { data } = await API.post(`/comments/${id}`, {
-        body: newComment
-      });
+      const { data } = await API.post(`/comments/${id}`, { body: newComment });
       setComments([...comments, data]);
       setNewComment('');
     } catch (err) {
@@ -87,21 +78,13 @@ const PostPage = () => {
   const canEdit = user && (user._id === post.author?._id || user.role === 'admin');
   const canDelete = user && (user._id === post.author?._id || user.role === 'admin');
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    // Full Cloudinary URL or any absolute URL
-    if (imagePath.startsWith('http')) return imagePath;
-    // Local file name – use base URL (development only)
-    return `${getImageBaseUrl()}${imagePath}`;
-  };
-
   return (
     <div className="post-page">
       <article className="post-full">
         {post.image && (
           <div className="post-image-container">
             <img 
-              src={getImageUrl(post.image)} 
+              src={`${BACKEND_URL}/uploads/${post.image}`}  // <-- CHANGED
               alt={post.title}
               className="post-image-full"
             />

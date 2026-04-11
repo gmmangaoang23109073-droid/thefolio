@@ -1,20 +1,24 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const cloudinary = require('cloudinary').v2;
 
-// Dynamically load CloudinaryStorage (works with any version)
+// Try to load Cloudinary, but don't crash if it fails
+let cloudinary;
 let CloudinaryStorage;
+let useCloudinary = false;
+
 try {
-  const cs = require('multer-storage-cloudinary');
-  // Handle both default export and named export
-  CloudinaryStorage = cs.CloudinaryStorage || cs.default?.CloudinaryStorage || cs;
+  cloudinary = require('cloudinary').v2;
+  const cloudinaryStorage = require('multer-storage-cloudinary');
+  // Handle different export styles
+  CloudinaryStorage = cloudinaryStorage.CloudinaryStorage || cloudinaryStorage.default?.CloudinaryStorage || cloudinaryStorage;
+  useCloudinary = !!CloudinaryStorage;
 } catch (err) {
-  console.error('Failed to load multer-storage-cloudinary:', err.message);
+  console.log('Cloudinary not available, using local storage');
 }
 
-// Configure Cloudinary
-if (process.env.CLOUDINARY_CLOUD_NAME) {
+// Configure Cloudinary if available and credentials exist
+if (useCloudinary && process.env.CLOUDINARY_CLOUD_NAME) {
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -22,9 +26,9 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
   });
 }
 
+// Choose storage
 let storage;
-if (CloudinaryStorage && process.env.CLOUDINARY_CLOUD_NAME) {
-  // Use Cloudinary
+if (useCloudinary && process.env.CLOUDINARY_CLOUD_NAME && CloudinaryStorage) {
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
@@ -33,7 +37,7 @@ if (CloudinaryStorage && process.env.CLOUDINARY_CLOUD_NAME) {
     },
   });
 } else {
-  // Fallback to local disk
+  // Local disk fallback (works on Render but files are temporary)
   if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
   }
@@ -51,13 +55,9 @@ const fileFilter = (req, file, cb) => {
   const ext = allowedTypes.test(path.extname(file.originalname).toLowerCase());
   const mime = allowedTypes.test(file.mimetype);
   if (ext && mime) return cb(null, true);
-  cb(new Error('Only image files are allowed (jpg, png, gif, webp)'));
+  cb(new Error('Only image files are allowed'));
 };
 
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
-});
+const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 module.exports = upload;

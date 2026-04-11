@@ -15,27 +15,18 @@ const contactRoutes = require('./routes/contact.routes');
 const app = express();
 
 // ─────────────────────────────────────────────────────────────
-// CORS Configuration – allow all Vercel preview URLs and localhost
+// CORS: Allow all origins (fixes preflight issues)
 // ─────────────────────────────────────────────────────────────
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://thefolio-rust.vercel.app',
-];
-
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., mobile apps, curl)
-    if (!origin) return callback(null, true);
-    // Allow explicit origins or any *.vercel.app URL
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      console.warn(`CORS blocked: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
+// Handle preflight requests explicitly
+app.options('*', (req, res) => {
+  res.sendStatus(200);
+});
 
 // ─────────────────────────────────────────────────────────────
 // Body parsing middleware
@@ -70,14 +61,12 @@ app.get('/api/test', (req, res) => {
 app.get('/api/contact/test-direct', (req, res) => {
   res.json({ message: 'Direct route works' });
 });
-
-// Simple health check for Render
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ─────────────────────────────────────────────────────────────
-// Global error handler (prevents server from crashing on unhandled errors)
+// Global error handler
 // ─────────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);

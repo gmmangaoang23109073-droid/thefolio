@@ -81,13 +81,22 @@ const PostPage = () => {
   const canEdit = user && (user._id === post.author?._id || user.role === 'admin');
   const canDelete = user && (user._id === post.author?._id || user.role === 'admin');
 
+  // Helper function to get the correct image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    // If it's already a full URL (Cloudinary), return as is
+    if (imagePath.startsWith('http')) return imagePath;
+    // Otherwise assume it's a local filename
+    return `http://localhost:5000/uploads/${imagePath}`;
+  };
+
   return (
     <div className="post-page">
       <article className="post-full">
         {post.image && (
           <div className="post-image-container">
             <img 
-              src={`http://localhost:5000/uploads/${post.image}`} 
+              src={getImageUrl(post.image)} 
               alt={post.title}
               className="post-image-full"
             />

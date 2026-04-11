@@ -3,8 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
-import { BACKEND_URL } from '../config';  // <-- ADD
 import '../App.css';
+
+// Define backend URL based on environment
+const BACKEND_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://thefolio-mpb8.onrender.com' 
+  : 'http://localhost:5000';
 
 const PostPage = () => {
   const { id } = useParams();
@@ -84,7 +88,7 @@ const PostPage = () => {
         {post.image && (
           <div className="post-image-container">
             <img 
-              src={`${BACKEND_URL}/uploads/${post.image}`}  // <-- CHANGED
+              src={`${BACKEND_URL}/uploads/${post.image}`}
               alt={post.title}
               className="post-image-full"
             />

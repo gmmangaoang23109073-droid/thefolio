@@ -3,8 +3,12 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import API from "../api/axios";
 import profilePic from "../images/me.jpg";
-import { BACKEND_URL } from "../config";  // <-- ADD
 import "../App.css";
+
+// Define backend URL based on environment
+const BACKEND_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://thefolio-mpb8.onrender.com' 
+  : 'http://localhost:5000';
 
 const HomePage = () => {
   const [posts, setPosts] = useState([]);
@@ -53,7 +57,7 @@ const HomePage = () => {
                 {post.image && (
                   <Link to={`/posts/${post._id}`}>
                     <img 
-                      src={`${BACKEND_URL}/uploads/${post.image}`}  // <-- CHANGED
+                      src={`${BACKEND_URL}/uploads/${post.image}`}
                       alt={post.title}
                       className="post-card-image"
                     />

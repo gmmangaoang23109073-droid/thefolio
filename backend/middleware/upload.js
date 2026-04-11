@@ -2,18 +2,20 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const { CloudinaryStorage } = require('multer-storage-cloudinary'); // ✅ correct import
 
-// Cloudinary config (read from environment variables)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// Configure Cloudinary if credentials exist (Render)
+if (process.env.CLOUDINARY_CLOUD_NAME) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
+}
 
-// Use Cloudinary in production (Vercel), local disk in development
 let storage;
-if (process.env.NODE_ENV === 'production') {
+if (process.env.CLOUDINARY_CLOUD_NAME) {
+  // Production: Cloudinary
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
@@ -22,7 +24,7 @@ if (process.env.NODE_ENV === 'production') {
     },
   });
 } else {
-  // Local development – save to disk
+  // Local development: disk storage
   if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
   }

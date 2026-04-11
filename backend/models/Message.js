@@ -11,9 +11,8 @@ const messageSchema = new mongoose.Schema({
   email: { type: String, required: true },
   message: { type: String, required: true },
   replies: { type: [replySchema], default: [] },
-  // legacy fields (optional, keep for backward compatibility)
-  adminReply: { type: String },
-  repliedAt: { type: Date },
+  adminReply: { type: String },   // legacy
+  repliedAt: { type: Date },      // legacy
   createdAt: { type: Date, default: Date.now }
 });
 

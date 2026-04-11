@@ -103,18 +103,27 @@ router.post('/messages/:id/reply', protect, async (req, res) => {
     const { id } = req.params;
     const { reply } = req.body;
 
+    console.log('📩 User reply attempt for message:', id);
+
+    // Find message
     const message = await Message.findById(id);
-    if (!message) return res.status(404).json({ error: 'Message not found' });
+    if (!message) {
+      console.log('❌ Message not found:', id);
+      return res.status(404).json({ error: 'Message not found' });
+    }
 
     // Verify ownership
     if (message.email !== req.user.email) {
+      console.log('❌ Email mismatch. Message email:', message.email, 'User email:', req.user.email);
       return res.status(403).json({ error: 'You can only reply to your own messages' });
     }
 
-    // Ensure replies array exists
-    if (!message.replies) message.replies = [];
+    // Ensure replies array exists (for old documents)
+    if (!message.replies) {
+      message.replies = [];
+    }
 
-    // Add new reply
+    // Add the reply
     message.replies.push({
       text: reply,
       sender: 'user',
@@ -122,11 +131,12 @@ router.post('/messages/:id/reply', protect, async (req, res) => {
     });
 
     await message.save();
+    console.log('✅ Reply saved for message:', id);
 
     res.json({ success: true, message: 'Reply added' });
   } catch (err) {
-    console.error('User reply error:', err);
-    res.status(500).json({ error: 'Failed to add reply' });
+    console.error('🔥 User reply error:', err);
+    res.status(500).json({ error: err.message || 'Failed to add reply' });
   }
 });
 

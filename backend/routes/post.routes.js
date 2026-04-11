@@ -35,7 +35,6 @@ router.get('/:id', async (req, res) => {
 });
 
 // ── POST /api/posts — Member or Admin: create new post
-// upload.single('image') handles optional image file
 router.post('/', protect, memberOrAdmin, upload.single('image'), async (req, res) => {
   try {
     const { title, body } = req.body;
@@ -45,7 +44,7 @@ router.post('/', protect, memberOrAdmin, upload.single('image'), async (req, res
       title,
       body,
       image,
-      author: req.user._id,
+      author: req.user.id,   // ✅ changed from req.user._id to req.user.id
     });
 
     await post.populate('author', 'name profilePic');
@@ -62,7 +61,7 @@ router.put('/:id', protect, memberOrAdmin, upload.single('image'), async (req, r
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    const isOwner = post.author.toString() === req.user._id.toString();
+    const isOwner = post.author.toString() === req.user.id;   // ✅ changed _id to id
     const isAdmin = req.user.role === 'admin';
 
     if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Not authorized' });
@@ -84,7 +83,7 @@ router.delete('/:id', protect, memberOrAdmin, async (req, res) => {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: 'Post not found' });
 
-    const isOwner = post.author.toString() === req.user._id.toString();
+    const isOwner = post.author.toString() === req.user.id;   // ✅ changed _id to id
     const isAdmin = req.user.role === 'admin';
 
     if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Not authorized' });
@@ -95,26 +94,5 @@ router.delete('/:id', protect, memberOrAdmin, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
-// POST /api/contact
-router.post('/', async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-
-    if (!name || !email || !message) {
-      return res.status(400).json({ error: 'All fields are required' });
-    }
-
-    const newMessage = new Message({ name, email, message });
-    await newMessage.save();
-
-    res.status(201).json({ success: true, message: 'Message sent successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-
 
 module.exports = router;

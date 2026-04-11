@@ -16,6 +16,13 @@ const PostPage = () => {
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Get base URL for locally stored images (development only)
+  const getImageBaseUrl = () => {
+    // In production, images are served from Cloudinary (full URLs)
+    if (process.env.NODE_ENV === 'production') return '';
+    return 'http://localhost:5000/uploads/';
+  };
+
   const fetchPost = useCallback(async () => {
     try {
       const { data } = await API.get(`/posts/${id}`);
@@ -77,17 +84,15 @@ const PostPage = () => {
   if (error) return <div className="error-message">{error}</div>;
   if (!post) return <div className="not-found">Post not found</div>;
 
-  // Check if current user can edit/delete this post
   const canEdit = user && (user._id === post.author?._id || user.role === 'admin');
   const canDelete = user && (user._id === post.author?._id || user.role === 'admin');
 
-  // Helper function to get the correct image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    // If it's already a full URL (Cloudinary), return as is
+    // Full Cloudinary URL or any absolute URL
     if (imagePath.startsWith('http')) return imagePath;
-    // Otherwise assume it's a local filename
-    return `http://localhost:5000/uploads/${imagePath}`;
+    // Local file name – use base URL (development only)
+    return `${getImageBaseUrl()}${imagePath}`;
   };
 
   return (
@@ -105,11 +110,8 @@ const PostPage = () => {
 
         <div className="post-header">
           <h1 className="post-title">{post.title}</h1>
-          
           <div className="post-meta">
-            <span className="post-author">
-              By {post.author?.name || 'Unknown'}
-            </span>
+            <span className="post-author">By {post.author?.name || 'Unknown'}</span>
             <span className="post-date">
               {new Date(post.createdAt).toLocaleDateString('en-US', {
                 year: 'numeric',
@@ -119,7 +121,6 @@ const PostPage = () => {
             </span>
           </div>
 
-          {/* Show Edit and Delete buttons if user is author or admin */}
           {(canEdit || canDelete) && (
             <div className="post-actions">
               {canEdit && (
@@ -143,10 +144,8 @@ const PostPage = () => {
         </div>
       </article>
 
-      {/* Comments Section */}
       <section className="comments-section">
         <h2 className="comments-title">Comments ({comments.length})</h2>
-
         {user ? (
           <form onSubmit={handleCommentSubmit} className="comment-form">
             <textarea
@@ -157,11 +156,7 @@ const PostPage = () => {
               required
               className="comment-input"
             />
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={submitting}
-            >
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
               {submitting ? 'Posting...' : 'Post Comment'}
             </button>
           </form>
@@ -170,7 +165,6 @@ const PostPage = () => {
             <Link to="/login">Login</Link> to leave a comment
           </p>
         )}
-
         <div className="comments-list">
           {comments.length === 0 ? (
             <p className="no-comments">No comments yet. Be the first to comment!</p>

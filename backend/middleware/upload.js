@@ -2,9 +2,18 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary'); // ✅ correct import
 
-// Configure Cloudinary if credentials exist (Render)
+// Dynamically load CloudinaryStorage (works with any version)
+let CloudinaryStorage;
+try {
+  const cs = require('multer-storage-cloudinary');
+  // Handle both default export and named export
+  CloudinaryStorage = cs.CloudinaryStorage || cs.default?.CloudinaryStorage || cs;
+} catch (err) {
+  console.error('Failed to load multer-storage-cloudinary:', err.message);
+}
+
+// Configure Cloudinary
 if (process.env.CLOUDINARY_CLOUD_NAME) {
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -14,8 +23,8 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
 }
 
 let storage;
-if (process.env.CLOUDINARY_CLOUD_NAME) {
-  // Production: Cloudinary
+if (CloudinaryStorage && process.env.CLOUDINARY_CLOUD_NAME) {
+  // Use Cloudinary
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
@@ -24,7 +33,7 @@ if (process.env.CLOUDINARY_CLOUD_NAME) {
     },
   });
 } else {
-  // Local development: disk storage
+  // Fallback to local disk
   if (!fs.existsSync('uploads')) {
     fs.mkdirSync('uploads');
   }

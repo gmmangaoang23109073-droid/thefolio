@@ -1,65 +1,52 @@
-// backend/routes/post.routes.js
-
-const express = require(' express');
+const express = require('express');
 const Post = require('../models/Post');
 const { protect } = require('../middleware/auth.middleware');
 const { memberOrAdmin } = require('../middleware/role.middleware');
 const upload = require('../middleware/upload');
-const fs = require('fs');
-const path = require('path');
 
 const router = express.Router();
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('Created uploads directory');
-}
-
-// ── GET /api/posts — Public: all published posts (newest first)
+// GET all published posts
 router.get('/', async (req, res) => {
   try {
     const posts = await Post.find({ status: 'published' })
       .populate('author', 'name profilePic')
       .sort({ createdAt: -1 });
-
     res.json(posts);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// ── GET /api/posts/:id — Public: single post by ID
+// GET single post
 router.get('/:id', async (req, res) => {
   try {
     const post = await Post.findById(req.params.id).populate('author', 'name profilePic');
     if (!post || post.status === 'removed')
       return res.status(404).json({ message: 'Post not found' });
-
     res.json(post);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// ── POST /api/posts — Member or Admin: create new post
-// Handle multer errors separately
-router.post('/', (req, res, next) => {
-  // Use multer with error handling
-  upload.single('image')(req, res, (err) => {
+// POST create new post with image upload (with detailed logging)
+router.post('/', protect, memberOrAdmin, (req, res, next) => {
+  // Wrap multer to catch errors
+  upload.single('image')(req, res, function(err) {
     if (err) {
-      console.error('Multer error:', err);
+      console.error("❌ Multer error:", err);
       return res.status(400).json({ message: err.message });
     }
+    console.log("✅ req.file after multer:", req.file);
+    console.log("📝 req.body:", req.body);
     next();
   });
-}, protect, memberOrAdmin, async (req, res) => {
-  console.log('req.file:', req.file); // Debug log
-  console.log('req.body:', req.body);
+}, async (req, res) => {
   try {
     const { title, body } = req.body;
     const image = req.file ? req.file.filename : '';
+    console.log("💾 Saving image filename:", image);
 
     const post = await Post.create({
       title,
@@ -69,21 +56,16 @@ router.post('/', (req, res, next) => {
     });
 
     await post.populate('author', 'name profilePic');
-
+    console.log("✅ Post created:", post._id);
     res.status(201).json(post);
   } catch (err) {
-    console.error('Post creation error:', err);
+    console.error("❌ Post creation error:", err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// ── PUT /api/posts/:id — Edit: only post owner OR admin
-router.put('/:id', protect, memberOrAdmin, (req, res, next) => {
-  upload.single('image')(req, res, (err) => {
-    if (err) return res.status(400).json({ message: err.message });
-    next();
-  });
-}, async (req, res) => {
+// PUT update post
+router.put('/:id', protect, memberOrAdmin, upload.single('image'), async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).json({ message: 'Post not found' });
@@ -100,12 +82,11 @@ router.put('/:id', protect, memberOrAdmin, (req, res, next) => {
     await post.save();
     res.json(post);
   } catch (err) {
-    console.error('Post update error:', err);
     res.status(500).json({ message: err.message });
   }
 });
 
-// ── DELETE /api/posts/:id — Delete: only post owner OR admin
+// DELETE post
 router.delete('/:id', protect, memberOrAdmin, async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -119,7 +100,6 @@ router.delete('/:id', protect, memberOrAdmin, async (req, res) => {
     await post.deleteOne();
     res.json({ message: 'Post deleted successfully' });
   } catch (err) {
-    console.error('Post delete error:', err);
     res.status(500).json({ message: err.message });
   }
 });

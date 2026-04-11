@@ -4,6 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
 import '../App.css';
 
+// Dynamic backend URL (same as used in other pages)
+const BACKEND_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://thefolio-mpb8.onrender.com' 
+  : 'http://localhost:5000';
+
 function ProfilePage() {
   const { user, setUser, logout } = useAuth();
   const fileInputRef = useRef(null);
@@ -18,9 +23,12 @@ function ProfilePage() {
   
   const [profilePic, setProfilePic] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(
-    user?.profilePic ? `http://localhost:5000/uploads/${user.profilePic}` : '/default-avatar.png'
+    user?.profilePic 
+      ? `${BACKEND_URL}/uploads/${user.profilePic}` 
+      : '/default-avatar.png'
   );
   const [uploading, setUploading] = useState(false);
+  const [uploadingPic, setUploadingPic] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -49,6 +57,41 @@ function ProfilePage() {
     }
   };
 
+  // Save profile picture only (without updating name/bio)
+  const handleSaveProfilePic = async () => {
+    if (!profilePic) {
+      setError('Please select an image first');
+      return;
+    }
+    setUploadingPic(true);
+    setError('');
+    setMessage('');
+
+    const formDataToSend = new FormData();
+    formDataToSend.append('profilePic', profilePic);
+
+    try {
+      const { data } = await API.put('/auth/profile', formDataToSend, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      
+      setUser(data);
+      setMessage('Profile picture updated successfully');
+      
+      // Clear the file input and reset local preview to server URL
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      setProfilePic(null);
+      // Update preview to the server URL (new image)
+      setPreviewUrl(`${BACKEND_URL}/uploads/${data.profilePic}`);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to upload picture');
+    } finally {
+      setUploadingPic(false);
+    }
+  };
+
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setError('');
@@ -64,9 +107,7 @@ function ProfilePage() {
 
     try {
       const { data } = await API.put('/auth/profile', formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       
       setUser(data);
@@ -77,6 +118,10 @@ function ProfilePage() {
         fileInputRef.current.value = '';
       }
       setProfilePic(null);
+      // Update preview URL in case the profile picture changed
+      if (data.profilePic) {
+        setPreviewUrl(`${BACKEND_URL}/uploads/${data.profilePic}`);
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Update failed');
     } finally {
@@ -141,6 +186,17 @@ function ProfilePage() {
             <label htmlFor="profile-picture-input" className="btn btn-secondary">
               Choose Image
             </label>
+            {profilePic && (
+              <button 
+                type="button" 
+                onClick={handleSaveProfilePic}
+                className="btn btn-primary"
+                disabled={uploadingPic}
+                style={{ marginLeft: '10px' }}
+              >
+                {uploadingPic ? 'Saving...' : 'Save Picture'}
+              </button>
+            )}
           </div>
           
           <p className="file-info">Supported: JPG, PNG, GIF (Max 5MB)</p>

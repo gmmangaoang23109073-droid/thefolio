@@ -30,17 +30,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST create new post with image
-router.post('/', protect, memberOrAdmin, (req, res, next) => {
-  upload.single('image')(req, res, (err) => {
-    if (err) {
-      console.error('Multer error:', err);
-      return res.status(400).json({ message: err.message });
-    }
-    console.log('File received:', req.file);
-    next();
-  });
-}, async (req, res) => {
+// POST create new post
+router.post('/', protect, memberOrAdmin, upload.single('image'), async (req, res) => {
   try {
     const { title, body } = req.body;
     if (!title || !body) {

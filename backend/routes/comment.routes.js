@@ -23,15 +23,21 @@ router.get('/:postId', async (req, res) => {
 // ── POST /api/comments/:postId — Member/Admin: add a comment
 router.post('/:postId', protect, memberOrAdmin, async (req, res) => {
   try {
+    const { body } = req.body;
+    if (!body || !body.trim()) {
+      return res.status(400).json({ message: 'Comment text is required' });
+    }
+
     const comment = await Comment.create({
       post: req.params.postId,
-      author: req.user._id,
-      body: req.body.body,
+      author: req.user.id,      // ✅ fixed: use req.user.id (not _id)
+      body: body.trim(),
     });
 
     await comment.populate('author', 'name profilePic');
     res.status(201).json(comment);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 });
@@ -42,7 +48,7 @@ router.delete('/:id', protect, memberOrAdmin, async (req, res) => {
     const comment = await Comment.findById(req.params.id);
     if (!comment) return res.status(404).json({ message: 'Comment not found' });
 
-    const isOwner = comment.author.toString() === req.user._id.toString();
+    const isOwner = comment.author.toString() === req.user.id;   // ✅ fixed
     const isAdmin = req.user.role === 'admin';
 
     if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Not authorized' });

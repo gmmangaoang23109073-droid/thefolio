@@ -5212,114 +5212,80 @@ body.dark-mode .btn-danger {
   margin-bottom: 1rem;
 }
 
-/* Dark mode for the entire admin dashboard */
-body.dark-mode .admin-dashboard {
-  background-color: #121212;
-  color: #e0e0e0;
+/* Solid black background for all admin containers */
+body.dark-mode .admin-dashboard,
+body.dark-mode .dashboard-header,
+body.dark-mode .stats .stat-card,
+body.dark-mode .admin-tabs button,
+body.dark-mode .admin-table,
+body.dark-mode .modal-overlay,
+body.dark-mode .modal-content,
+body.dark-mode .conversation-thread,
+body.dark-mode .reply-form,
+body.dark-mode .reply-form textarea {
+  background-color: #000000 !important;  /* pure black */
 }
 
-body.dark-mode .dashboard-header h1,
-body.dark-mode .stats .stat-card {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-  border-color: #444;
-}
-
-body.dark-mode .admin-tabs button {
-  background-color: #2a2a2a;
-  color: #ccc;
-  border: 1px solid #444;
-}
-
-body.dark-mode .admin-tabs button.active {
-  background-color: #3a6ea5;
-  color: white;
-}
-
-body.dark-mode .admin-table {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-}
-
-body.dark-mode .admin-table th {
-  background-color: #2a2a2a;
-  color: #fff;
-  border-bottom: 2px solid #444;
-}
-
-body.dark-mode .admin-table td {
-  border-bottom: 1px solid #444;
-  color: #ccc;
-}
-
-body.dark-mode .admin-table .btn-info,
-body.dark-mode .admin-table .btn-danger,
-body.dark-mode .admin-table .btn-toggle {
-  background-color: #3a6ea5;
-  color: white;
-}
-
-body.dark-mode .admin-table .btn-danger {
-  background-color: #a33;
-}
-
-/* Dark mode for conversation modal */
-body.dark-mode .modal-overlay {
-  background-color: rgba(0, 0, 0, 0.85);
-}
-
-body.dark-mode .modal-content {
-  background-color: #1e1e1e;
-  color: #e0e0e0;
-  border: 1px solid #444;
-}
-
-body.dark-mode .conversation-thread {
-  background-color: #2a2a2a;
-  border: 1px solid #444;
-}
-
+/* Override any grayish backgrounds */
 body.dark-mode .user-message,
 body.dark-mode .admin-message,
-body.dark-mode .user-message-reply {
-  background-color: #2c2c2c;
-  color: #f0f0f0;
-  border: 1px solid #444;
+body.dark-mode .user-message-reply,
+body.dark-mode .message-item,
+body.dark-mode .conversation-thread div {
+  background-color: #111111 !important;  /* very dark, not gray */
 }
 
-body.dark-mode .message-header {
-  color: #bbb;
-}
-
-body.dark-mode .message-text {
-  color: #fff;
-}
-
-/* Dark mode for reply form inside modal */
-body.dark-mode .reply-form textarea {
-  background-color: #2d2d2d;
-  color: white;
-  border: 1px solid #555;
-}
-
-body.dark-mode .reply-form textarea::placeholder {
-  color: #aaa;
-}
-
+/* Text colors – white for readability */
+body.dark-mode,
+body.dark-mode .admin-dashboard,
+body.dark-mode .dashboard-header h1,
+body.dark-mode .stats .stat-card,
+body.dark-mode .admin-table th,
+body.dark-mode .admin-table td,
+body.dark-mode .modal-content,
+body.dark-mode .message-header,
+body.dark-mode .message-text,
+body.dark-mode .reply-form textarea,
+body.dark-mode .reply-form textarea::placeholder,
 body.dark-mode .modal-actions button {
-  background-color: #3a6ea5;
-  color: white;
-  border: none;
+  color: #ffffff !important;
 }
 
+/* Remove pink accents – force neutral colors */
+body.dark-mode .admin-table .btn-info,
+body.dark-mode .admin-table .btn-danger,
+body.dark-mode .admin-table .btn-toggle,
+body.dark-mode .admin-tabs button.active,
+body.dark-mode .modal-actions .btn-primary {
+  background-color: #2c2c2c !important;
+  color: #ffffff !important;
+  border: 1px solid #444 !important;
+}
+
+/* Make links and interactive elements neutral */
+body.dark-mode a,
+body.dark-mode button,
+body.dark-mode .btn,
+body.dark-mode .read-more-btn {
+  color: #cccccc !important;
+}
+
+/* Borders – dark gray instead of pink */
+body.dark-mode .admin-table th,
+body.dark-mode .admin-table td,
+body.dark-mode .modal-content,
+body.dark-mode .conversation-thread,
+body.dark-mode .user-message,
+body.dark-mode .admin-message,
+body.dark-mode .reply-form textarea {
+  border-color: #333333 !important;
+}
+
+/* Remove any pink hover effects */
+body.dark-mode .admin-tabs button:hover,
+body.dark-mode .admin-table .btn-info:hover,
+body.dark-mode .admin-table .btn-danger:hover,
 body.dark-mode .modal-actions button:hover {
-  background-color: #2c4d73;
-}
-
-body.dark-mode .modal-actions .btn-secondary {
-  background-color: #555;
-}
-
-body.dark-mode .modal-actions .btn-secondary:hover {
-  background-color: #666;
+  background-color: #3a3a3a !important;
+  color: #ffffff !important;
 }
